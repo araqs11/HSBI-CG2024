@@ -181,7 +181,7 @@ void initQuad()
   glBindVertexArray(0);
   
   // Modify model matrix.
-  quad.model = glm::translate(glm::mat4(1.0f), glm::vec3(1.25f, 0.0f, 0.0f));
+  quad.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 }
 
 /*
@@ -217,8 +217,8 @@ bool init()
   }
 
   // Create all objects.
-  initTriangle();
   initQuad();
+  initTriangle();
   
   return true;
 }
@@ -230,8 +230,8 @@ void render()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	renderTriangle();
-	renderQuad();
+    renderQuad();
+	//renderTriangle();
 }
 
 void glutDisplay ()
@@ -253,6 +253,90 @@ void glutResize (int width, int height)
   projection = glm::perspective(45.0f, (float) width / height, zNear, zFar);
 }
 
+void quad_redraw() {
+    int i_eingabe;
+    bool correct = false;
+    std::string eingabe;
+    float rF = 0; float gF = 0; float bF = 0;
+    float* rgb;
+
+    std::cout << "Farb Modell für das Viereck wählen: " << std::endl;
+    std::cout << "1. RGB Modell" << std::endl;
+    std::cout << "2. CMY Modell" << std::endl;
+    std::cout << "3. HSV Modell" << std::endl;
+    while (!correct) {
+        try {
+            std::cin >> eingabe;
+            i_eingabe = std::stoi(eingabe);
+            if (i_eingabe < 4 && i_eingabe > 0) {
+                correct = true;
+            }
+            else {
+                std::cout << "Falsche Eingabe!" << std::endl;
+            }
+        }
+        catch (const std::invalid_argument& e) {
+            std::cout << "Gib einen numerischen Wert ein" << std::endl;
+        }
+        catch (const std::out_of_range& e) {
+            std::cout << "Gib einen erlaubten int Wert ein" << std::endl;
+        }
+        
+    }
+    correct = false;
+    while (!correct) {
+        storeInput(rF, gF, bF);
+        switch (i_eingabe) {
+            case 1: {	
+                if (!(rF < 0 || rF > 1 || gF < 0 || gF > 1 || bF < 0 || bF > 1)) {
+                    correct = true;
+                }
+                else {
+                    std::cout << "Bitte gib Zahlen zwischen 0 und 1 ein" << std::endl;
+                }
+            } break;
+            case 2: {
+                if (!(rF < 0 || rF > 1 || gF < 0 || gF > 1 || bF < 0 || bF > 1)) {
+                    correct = true;
+                    rF = 1 - rF; gF = 1 - gF; bF = 1 - bF;
+                }
+                else {
+                    std::cout << "Bitte gib Zahlen zwischen 0 und 1 ein" << std::endl;
+                }
+            } break;
+            case 3: {
+                if (!(rF < 0 || rF > 359 || gF < 0 || gF > 1 || bF < 0 || bF > 1)) {
+                    correct = true;
+                    rgb = hsv_to_rgb(rF, gF, bF);
+                    rF = rgb[0]; gF = rgb[1]; bF = rgb[2];
+                }
+                else {
+                    std::cout << "Bitte gib passende HSV Werte ein" << std::endl;
+                }
+                
+            } break; break;
+        }
+    }
+
+    const std::vector<glm::vec3> colors = { { rF, gF, bF }, { rF, gF, bF }, { rF, gF, bF }, { rF, gF, bF } };
+
+    
+    glBindVertexArray(quad.vao);
+
+    glGenBuffers(1, &quad.colorBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, quad.colorBuffer);
+    glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), colors.data(), GL_STATIC_DRAW);
+
+    GLuint pos = glGetAttribLocation(program.getHandle(), "color");
+    glEnableVertexAttribArray(pos);
+    glVertexAttribPointer(pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    glBindVertexArray(0);
+
+}
+
+
+
 /*
  Callback for char input.
  */
@@ -262,7 +346,8 @@ void glutKeyboard (unsigned char keycode, int x, int y)
   case 27: // ESC
     glutDestroyWindow ( glutID );
     return;
-  case 99: execute_Converter(); break;
+  case 'c': execute_Converter(); break;
+  case 'd': quad_redraw(); break;
   case '+':
     // do something
     break;
@@ -286,7 +371,8 @@ void glutKeyboard (unsigned char keycode, int x, int y)
 
 int main(int argc, char** argv)
 {
-    execute_Converter();
+    //execute_Converter();
+    
   // GLUT: Initialize freeglut library (window toolkit).
   glutInitWindowSize    (WINDOW_WIDTH, WINDOW_HEIGHT);
   glutInitWindowPosition(40,40);
