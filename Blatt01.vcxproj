@@ -165,12 +165,12 @@
   <ItemGroup>
     <ClCompile Include="GLSLProgram.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="rgbConverter.cpp" />
+    <ClCompile Include="colorConverter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GLSLProgram.h" />
     <ClInclude Include="GLTools.h" />
-    <ClInclude Include="rgbConverter.h" />
+    <ClInclude Include="colorConverter.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shader\simple.frag" />

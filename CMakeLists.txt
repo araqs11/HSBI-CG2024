@@ -31,7 +31,7 @@ link_directories (${PROJECT_SOURCE_DIR}/libs/glew/lib/vs2015_x64/Release)
 link_directories (${PROJECT_SOURCE_DIR}/libs/freeglut/lib/vs2015_x64/Release)
 
 # executable Blatt01
-add_executable (Blatt01 ${sources})
+add_executable (Blatt01 ${sources} "colorConverter.cpp")
 target_link_libraries(Blatt01 ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} ${GLEW_LIBRARIES} ${GLM_LIBRARIES} libglew32.lib freeglut_static.lib)
 # copy the shader directory relative to the executable
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/shader
