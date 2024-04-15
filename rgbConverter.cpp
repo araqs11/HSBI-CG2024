@@ -52,22 +52,13 @@ void storeInput(float& rF, float& gF, float& bF) {
 		try {
 			std::cin >> r;
 			rF = std::stof(r);
-			if (rF > 1 || rF < 0) {
-				std::cout << "Gib einen Wert zwischen 0 und 1 ein" << std::endl;
-				continue;
-			}
+			
 			std::cin >> g;
 			gF = std::stof(g);
-			if (gF > 1 || gF < 0) {
-				std::cout << "Gib einen Wert zwischen 0 und 1 ein" << std::endl;
-				continue;
-			}
+			
 			std::cin >> b;
 			bF = std::stof(b);
-			if (bF > 1 || bF < 0) {
-				std::cout << "Gib einen Wert zwischen 0 und 1 ein" << std::endl;
-				continue;
-			}
+			
 			input_correct = true;
 		}
 		catch (const std::invalid_argument& e) {
@@ -90,7 +81,17 @@ float getMin(float a, float b) {
 
 void executeRGB_Converter(void) {
 	float rF = 0; float gF = 0; float bF = 0;
-	storeInput(rF, gF, bF);
+	bool correct = false;
+	while (!correct) {
+		storeInput(rF, gF, bF);
+		if (!(rF < 0 || rF > 1 || gF < 0 || gF > 1 || bF < 0 || bF > 1)) {
+			correct = true;
+		}
+		else {
+			std::cout << "Bitte gib Zahlen zwischen 0 und 1 ein" << std::endl;
+		}
+	}
+
 
 	float* hsv = rgb_to_hsv(rF, gF, bF);
 	float* cmy = rgb_to_cmy(rF, gF, bF);
