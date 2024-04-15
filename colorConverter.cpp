@@ -50,12 +50,15 @@ void storeInput(float& rF, float& gF, float& bF) {
 	bool input_correct = false;
 	while (!input_correct) {
 		try {
+			std::cout << "Wert eingeben: ";
 			std::cin >> r;
 			rF = std::stof(r);
-			
+
+			std::cout << "Wert eingeben: ";
 			std::cin >> g;
 			gF = std::stof(g);
-			
+
+			std::cout << "Wert eingeben: ";
 			std::cin >> b;
 			bF = std::stof(b);
 			
@@ -84,6 +87,7 @@ void execute_Converter(void) {
 	float hF = 0; float sF = 0; float vF = 0;
 
 	bool correct = false;
+	std::cout << "RGB Werte eingeben: " << std::endl;
 	while (!correct) {
 		storeInput(rF, gF, bF);
 		if (!(rF < 0 || rF > 1 || gF < 0 || gF > 1 || bF < 0 || bF > 1)) {
@@ -108,9 +112,14 @@ void execute_Converter(void) {
 	delete[] hsv;
 	delete[] cmy;
 	correct = false;
+	std::cout << "HSV Werte eingeben: " << std::endl;
+
 	while (!correct) {
 		storeInput(hF, sF, vF);
-		if (!(hF < 0 || hF > 359 || sF < 0 || sF > 1 || vF < 0 || vF > 1)) {
+		if (hF < 0 || hF > 359) {
+			std::cout << "Bitte gib eine Zahl zwischen 0 und 359 ein" << std::endl;
+		}
+		if (!(sF < 0 || sF > 1 || vF < 0 || vF > 1)) {
 			correct = true;
 		}
 		else {
@@ -120,8 +129,13 @@ void execute_Converter(void) {
 	float* hsv_rgb = hsv_to_rgb(hF, sF, vF);
 	float* hsv_cmy = hsv_to_cmy(hF, sF, vF);
 
-	std::cout << "HSV Wert als RGB Wert: " << hsv_rgb[0] << ", " << hsv_rgb[1] << ", " << hsv_rgb[2] << std::endl;
-	std::cout << "HSV Wert als CMY Wert: " << hsv_cmy[0] << ", " << hsv_cmy[1] << ", " << hsv_cmy[2] << std::endl;
+	std::cout << "R: " << hsv_rgb[0] << std::endl;
+	std::cout << "G: " << hsv_rgb[1] << std::endl;
+	std::cout << "B: " << hsv_rgb[2] << std::endl << std::endl;
+
+	std::cout << "C: " << hsv_cmy[0] << std::endl;
+	std::cout << "M: " << hsv_cmy[1] << std::endl;
+	std::cout << "Y: " << hsv_cmy[2] << std::endl;
 
 	delete[] hsv_rgb;
 	delete[] hsv_cmy;
@@ -131,18 +145,18 @@ float* hsv_to_rgb(float h, float s, float v) {
 	float r, g, b;
 	float* values = new float[3];
 	float c = v * s;
-	float x = c * (1 - std::abs(((int)h / 60) % 2 - 1));
+	float x = c * (1 - std::abs( (int)(h / 60) % 2 - 1) );
 	float m = v - c;
 
-	if (0 <= h && h < 60) { r = c; g = x; b = 0; }
-	else if (60 <= h && h < 120) { r = x; g = c; b = 0; }
+	if (0 <= h && h < 60)         { r = c; g = x; b = 0; }
+	else if (60 <= h && h < 120)  { r = x; g = c; b = 0; }
 	else if (120 <= h && h < 180) { r = 0; g = c; b = x; }
 	else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
 	else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
 	else if (300 <= h && h < 360) { r = c; g = 0; b = x; }
-	values[0] = (r + m) * 255;
-	values[1] = (g + m) * 255;
-	values[2] = (b + m) * 255;
+	values[0] = (r + m);
+	values[1] = (g + m);
+	values[2] = (b + m);
 	return values;
 }
 

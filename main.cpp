@@ -262,7 +262,7 @@ void glutKeyboard (unsigned char keycode, int x, int y)
   case 27: // ESC
     glutDestroyWindow ( glutID );
     return;
-    
+  case 99: execute_Converter(); break;
   case '+':
     // do something
     break;
