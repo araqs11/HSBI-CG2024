@@ -14,8 +14,6 @@
 
 #include "rgbConverter.h"
 
-#include "rgbConverter.h"
-
 // Standard window width
 const int WINDOW_WIDTH  = 640;
 // Standard window height
