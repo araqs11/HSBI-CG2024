@@ -280,6 +280,31 @@ void glutKeyboard (unsigned char keycode, int x, int y)
   glutPostRedisplay();
 }
 
+float* HSVtoRGB(int h, float s, float v) {
+    float r, g, b;
+    float* values = new float[3];
+    float c = v * s;
+    float x = c * (1 - std::abs((h / 60) % 2 - 1));
+    float m = v - c;
+
+    if (0 <= h && h < 60) { r = c; g = x; b = 0; }
+    else if (60 <= h && h < 120) { r = x; g = c; b = 0; }
+    else if (120 <= h && h < 180) { r = 0; g = c; b = x; }
+    else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
+    else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
+    else if (300 <= h && h < 360) { r = c; g = 0; b = x; }
+    values[0] = (r + m) * 255;
+    values[1] = (g + m) * 255;
+    values[2] = (b + m) * 255;
+    return values;
+}
+
+float* HSVtoCMY(int h, float s, float v) {
+    float* a = HSVtoRGB(h,s,v);
+    return a;
+
+}
+
 int main(int argc, char** argv)
 {
   // GLUT: Initialize freeglut library (window toolkit).
@@ -329,6 +354,26 @@ int main(int argc, char** argv)
     return -2;
   }
 
+  int h;
+  float s, v;
+  std::string eingabe;
+
+  std::cout << "HSV-Wert : H Wert eingeben:" << std::endl;
+  std::cin >> eingabe;
+  h = std::stoi(eingabe);
+
+  std::cout << "HSV-Wert : S Wert eingeben:" << std::endl;
+  std::cin >> eingabe;
+  s = std::stof(eingabe);
+
+  std::cout << "HSV-Wert : V Wert eingeben:" << std::endl;
+  std::cin >> eingabe;
+  v = std::stof(eingabe);
+  float* hsv_rgb = HSVtoRGB(h, s, v);
+  float* hsv_cmy = HSVtoCMY(h, s, v);
+
+  std::cout << "HSV Wert als RGB Wert: " << *hsv_rgb << ", " << *(1 + hsv_rgb) << ", " << *(2 + hsv_rgb) << std::endl;
+  std::cout << "HSV Wert als CMY Wert: " << *hsv_cmy << ", " << *(1 + hsv_cmy) << ", " << *(2 + hsv_cmy) << std::endl;
   // GLUT: Loop until the user closes the window
   // rendering & event handling
   glutMainLoop ();
