@@ -12,6 +12,10 @@
 #include "GLSLProgram.h"
 #include "GLTools.h"
 
+#include "rgbConverter.h"
+
+#include "rgbConverter.h"
+
 // Standard window width
 const int WINDOW_WIDTH  = 640;
 // Standard window height
@@ -282,6 +286,8 @@ void glutKeyboard (unsigned char keycode, int x, int y)
 
 int main(int argc, char** argv)
 {
+    executeRGB_Converter();
+
   // GLUT: Initialize freeglut library (window toolkit).
   glutInitWindowSize    (WINDOW_WIDTH, WINDOW_HEIGHT);
   glutInitWindowPosition(40,40);
