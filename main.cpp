@@ -260,7 +260,7 @@ void quad_redraw() {
     float rF = 0; float gF = 0; float bF = 0;
     float* rgb;
 
-    std::cout << "Farb Modell für das Viereck wählen: " << std::endl;
+    std::cout << "Farb Modell fuer das Viereck waehlen: " << std::endl;
     std::cout << "1. RGB Modell" << std::endl;
     std::cout << "2. CMY Modell" << std::endl;
     std::cout << "3. HSV Modell" << std::endl;
@@ -323,7 +323,6 @@ void quad_redraw() {
     
     glBindVertexArray(quad.vao);
 
-    glGenBuffers(1, &quad.colorBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, quad.colorBuffer);
     glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), colors.data(), GL_STATIC_DRAW);
 
@@ -332,7 +331,7 @@ void quad_redraw() {
     glVertexAttribPointer(pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
     glBindVertexArray(0);
-
+    std::cout << "Druecke 'c' fuer den Farbraum-Umwandler \noder 'd' um das Quadrat neu einzufaerben" << std::endl;
 }
 
 
