@@ -139,13 +139,17 @@ void execute_Converter(void) {
 
 	delete[] hsv_rgb;
 	delete[] hsv_cmy;
+
+	std::cout << "Druecke 'c' fuer den Farbraum-Umwandler \noder 'd' um das Quadrat neu einzufaerben" << std::endl;
 }
 
 float* hsv_to_rgb(float h, float s, float v) {
-	float r, g, b;
+	float r = 0;
+	float g = 0;
+	float b = 0;
 	float* values = new float[3];
 	float c = v * s;
-	float x = c * (1 - std::abs( (int)(h / 60) % 2 - 1) );
+	float x = c * (1 - std::abs((fmod(h / 60.0f, 2.0f) - 1)));
 	float m = v - c;
 
 	if (0 <= h && h < 60)         { r = c; g = x; b = 0; }
@@ -154,11 +158,15 @@ float* hsv_to_rgb(float h, float s, float v) {
 	else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
 	else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
 	else if (300 <= h && h < 360) { r = c; g = 0; b = x; }
-	values[0] = (r + m);
-	values[1] = (g + m);
-	values[2] = (b + m);
+	values[0] = round((r + m) * 1000) / 1000;
+	values[1] = round((g + m) * 1000) / 1000;
+	values[2] = round((b + m) * 1000) / 1000;
 	return values;
+
 }
+
+
+
 
 float* hsv_to_cmy(int h, float s, float v) {
 	float* rgb = hsv_to_rgb(h, s, v);

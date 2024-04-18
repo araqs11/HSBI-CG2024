@@ -370,10 +370,9 @@ void glutKeyboard (unsigned char keycode, int x, int y)
 
 
 int main(int argc, char** argv)
-{
-    //execute_Converter();
-    
-  // GLUT: Initialize freeglut library (window toolkit).
+{   
+ 
+    // GLUT: Initialize freeglut library (window toolkit).
   glutInitWindowSize    (WINDOW_WIDTH, WINDOW_HEIGHT);
   glutInitWindowPosition(40,40);
   glutInit(&argc, argv);
@@ -420,6 +419,8 @@ int main(int argc, char** argv)
     return -2;
   }
 
+  std::cout << "Druecke 'c' fuer den Farbraum-Umwandler \noder 'd' um das Quadrat neu einzufaerben" << std::endl;
+ 
   // GLUT: Loop until the user closes the window
   // rendering & event handling
   glutMainLoop ();
