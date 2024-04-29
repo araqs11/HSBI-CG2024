@@ -158,9 +158,9 @@ float* hsv_to_rgb(float h, float s, float v) {
 	else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
 	else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
 	else if (300 <= h && h < 360) { r = c; g = 0; b = x; }
-	values[0] = round((r + m) * 1000) / 1000;
-	values[1] = round((g + m) * 1000) / 1000;
-	values[2] = round((b + m) * 1000) / 1000;
+	values[0] = round((r + m) * 100) / 100;
+	values[1] = round((g + m) * 100) / 100;
+	values[2] = round((b + m) * 100) / 100;
 	return values;
 
 }
