@@ -83,7 +83,8 @@ void Triangle::init() {
 	// Unbind vertex array object (back to default).
 	glBindVertexArray(0);
 
-	model = glm::rotate(model, glm::radians(10.0f), glm::vec3(0.0f, 1.0f, 1.0f));
+	model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -2.0f, -3.0f));
+
 	
 }
 
