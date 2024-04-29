@@ -1,4 +1,5 @@
 /build
 /out
-.vcxproj
-.vcxproj.user
+*.vcxproj.user
+.vs
+/x64
