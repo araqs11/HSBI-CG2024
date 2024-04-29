@@ -40,37 +40,37 @@ Triangle triangle(program);
  */
 bool init()
 {
-  // OpenGL: Set "background" color and enable depth testing.
-  glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-  glEnable(GL_DEPTH_TEST);
+    // OpenGL: Set "background" color and enable depth testing.
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+    glEnable(GL_DEPTH_TEST);
   
-  // Construct view matrix.
-  glm::vec3 eye(0.0f, 0.0f, 4.0f);
-  glm::vec3 center(0.0f, 0.0f, 0.0f);
-  glm::vec3 up(0.0f, 1.0f, 0.0f);
+    // Construct view matrix.
+    glm::vec3 eye(0.0f, 0.0f, 4.0f);
+    glm::vec3 center(0.0f, 0.0f, 0.0f);
+    glm::vec3 up(0.0f, 1.0f, 0.0f);
   
-  view = glm::lookAt(eye, center, up);
+    view = glm::lookAt(eye, center, up);
   
-  // Create a shader program and set light direction.
-  if (!program.compileShaderFromFile("shader/simple.vert", cg::GLSLShader::VERTEX)) {
-    std::cerr << program.log();
-    return false;
-  }
+    // Create a shader program and set light direction.
+    if (!program.compileShaderFromFile("shader/simple.vert", cg::GLSLShader::VERTEX)) {
+        std::cerr << program.log();
+        return false;
+    }
   
-  if (!program.compileShaderFromFile("shader/simple.frag", cg::GLSLShader::FRAGMENT)) {
-    std::cerr << program.log();
-    return false;
-  }
+    if (!program.compileShaderFromFile("shader/simple.frag", cg::GLSLShader::FRAGMENT)) {
+        std::cerr << program.log();
+        return false;
+    }
   
-  if (!program.link()) {
-    std::cerr << program.log();
-    return false;
-  }
+    if (!program.link()) {
+        std::cerr << program.log();
+        return false;
+    }
 
-  // Create all objects.
-  triangle.init();
+    // Create all objects.
+    triangle.init();
   
-  return true;
+    return true;
 }
 
 /*
@@ -78,14 +78,14 @@ bool init()
  */
 void render()
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     triangle.render(projection, view);
 }
 
 void glutDisplay ()
 {
-   render();
-   glutSwapBuffers();
+    render();
+    glutSwapBuffers();
 }
 
 /*
@@ -93,12 +93,12 @@ void glutDisplay ()
  */
 void glutResize (int width, int height)
 {
-  // Division by zero is bad...
-  height = height < 1 ? 1 : height;
-  glViewport(0, 0, width, height);
+    // Division by zero is bad...
+    height = height < 1 ? 1 : height;
+    glViewport(0, 0, width, height);
   
-  // Construct projection matrix.
-  projection = glm::perspective(45.0f, (float) width / height, zNear, zFar);
+    // Construct projection matrix.
+    projection = glm::perspective(45.0f, (float) width / height, zNear, zFar);
 }
 
 /*
@@ -106,86 +106,86 @@ void glutResize (int width, int height)
  */
 void glutKeyboard (unsigned char keycode, int x, int y)
 {
-  switch (keycode) {
-  case 27: // ESC
-    glutDestroyWindow ( glutID );
-    return;
+    switch (keycode) {
+    case 27: // ESC
+        glutDestroyWindow ( glutID );
+        return;
     
-  case '+':
-    // do something
-    break;
-  case '-':
-    // do something
-    break;
-  case 'x':
-    // do something
-    break;
-  case 'y':
-    // do something
-    break;
-  case 'z':
-    // do something
-    break;
-  }
-  glutPostRedisplay();
+    case '+':
+        // do something
+        break;
+    case '-':
+        // do something
+        break;
+    case 'x':
+        // do something
+        break;
+    case 'y':
+        // do something
+        break;
+    case 'z':
+        // do something
+        break;
+    }
+    glutPostRedisplay();
 }
 
 int main(int argc, char** argv)
 {
-  // GLUT: Initialize freeglut library (window toolkit).
-  glutInitWindowSize    (WINDOW_WIDTH, WINDOW_HEIGHT);
-  glutInitWindowPosition(40,40);
-  glutInit(&argc, argv);
+    // GLUT: Initialize freeglut library (window toolkit).
+    glutInitWindowSize    (WINDOW_WIDTH, WINDOW_HEIGHT);
+    glutInitWindowPosition(40,40);
+    glutInit(&argc, argv);
   
-  // GLUT: Create a window and opengl context (version 4.3 core profile).
-  glutInitContextVersion(4, 3);
-  glutInitContextFlags  (GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
-  glutInitDisplayMode   (GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE);
+    // GLUT: Create a window and opengl context (version 4.3 core profile).
+    glutInitContextVersion(4, 3);
+    glutInitContextFlags  (GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
+    glutInitDisplayMode   (GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE);
   
-  glutCreateWindow("Aufgabenblatt 01");
-  glutID = glutGetWindow();
+    glutCreateWindow("Aufgabenblatt 01");
+    glutID = glutGetWindow();
   
-  // GLEW: Load opengl extensions
-  //glewExperimental = GL_TRUE;
-  if (glewInit() != GLEW_OK) {
-    return -1;
-  }
+    // GLEW: Load opengl extensions
+    //glewExperimental = GL_TRUE;
+    if (glewInit() != GLEW_OK) {
+        return -1;
+    }
 #if _DEBUG
-  if (glDebugMessageCallback) {
-    std::cout << "Register OpenGL debug callback " << std::endl;
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    glDebugMessageCallback(cg::glErrorVerboseCallback, nullptr);
-    glDebugMessageControl(GL_DONT_CARE,
-			  GL_DONT_CARE,
-			  GL_DONT_CARE,
-			  0,
-			  nullptr,
-			  true); // get all debug messages
-  } else {
-    std::cout << "glDebugMessageCallback not available" << std::endl;
-  }
+    if (glDebugMessageCallback) {
+        std::cout << "Register OpenGL debug callback " << std::endl;
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        glDebugMessageCallback(cg::glErrorVerboseCallback, nullptr);
+        glDebugMessageControl(GL_DONT_CARE,
+			    GL_DONT_CARE,
+			    GL_DONT_CARE,
+			    0,
+			    nullptr,
+			    true); // get all debug messages
+    } else {
+        std::cout << "glDebugMessageCallback not available" << std::endl;
+    }
 #endif
 
-  // GLUT: Set callbacks for events.
-  glutReshapeFunc(glutResize);
-  glutDisplayFunc(glutDisplay);
-  //glutIdleFunc   (glutDisplay); // redisplay when idle
+    // GLUT: Set callbacks for events.
+    glutReshapeFunc(glutResize);
+    glutDisplayFunc(glutDisplay);
+    //glutIdleFunc   (glutDisplay); // redisplay when idle
   
-  glutKeyboardFunc(glutKeyboard);
+    glutKeyboardFunc(glutKeyboard);
   
-  // init vertex-array-objects.
-  bool result = init();
-  if (!result) {
-    return -2;
-  }
+    // init vertex-array-objects.
+    bool result = init();
+    if (!result) {
+        return -2;
+    }
 
-  // GLUT: Loop until the user closes the window
-  // rendering & event handling
-  glutMainLoop ();
+    // GLUT: Loop until the user closes the window
+    // rendering & event handling
+    glutMainLoop ();
   
-  // Cleanup in destructors:
-  // Objects will be released in ~Object
-  // Shader program will be released in ~GLSLProgram
+    // Cleanup in destructors:
+    // Objects will be released in ~Object
+    // Shader program will be released in ~GLSLProgram
   
-  return 0;
+    return 0;
 }
