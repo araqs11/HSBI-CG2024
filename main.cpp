@@ -34,7 +34,7 @@ float zFar  = 100.0f;
 
 std::vector<Triangle*> faces;
 unsigned int n = 1; // Anzahl der Unterteilungsstufen [NICHT ZU HOCH MACHEN SONST STIRBT DEIN PC!]
-float sphereRadius = 0.5;
+float sphereRadius = 1.0f;
 
 void subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, int depth) {
     if (depth <= 0) {
@@ -78,26 +78,9 @@ void approximateSphere() {
         glBindBuffer(GL_ARRAY_BUFFER, faces[i]->positionBuffer);
         glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
 
-        glm::vec3 p1 = points[0];
-        glm::vec3 p2 = points[1];
-        glm::vec3 p3 = points[2];
-
-        float p1Length = sqrt(pow(p1.x,2.0f) + pow(p1.y,2.0f) + pow(p1.z,2.0f));
-        float p2Length = sqrt(pow(p2.x, 2.0f) + pow(p2.y, 2.0f) + pow(p2.z, 2.0f));
-        float p3Length = sqrt(pow(p3.x, 2.0f) + pow(p3.y, 2.0f) + pow(p3.z, 2.0f));
-
-        p1.x = sphereRadius * p1.x / p1Length;
-        p1.y = sphereRadius * p1.y / p1Length;
-        p1.z = sphereRadius * p1.z / p1Length;
-
-        p2.x = sphereRadius * p2.x / p2Length;
-        p2.y = sphereRadius * p2.y / p2Length;
-        p2.z = sphereRadius * p2.z / p2Length;
-
-        p3.x = sphereRadius * p3.x / p3Length;
-        p3.y = sphereRadius * p3.y / p3Length;
-        p3.z = sphereRadius * p3.z / p3Length;
-
+        glm::vec3 p1 = glm::normalize(points[0]);
+        glm::vec3 p2 = glm::normalize(points[1]);
+        glm::vec3 p3 = glm::normalize(points[2]);
 
         faces[i]->setPositions({ p1, p2, p3 });
     }
