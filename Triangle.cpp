@@ -40,10 +40,14 @@ void Triangle::setIndices(std::vector<GLushort> indices) {
 	glBindVertexArray(0);
 }
 
+void Triangle::rotate(float angle) {
+	model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 1.0f, 0.0f));
+}
+
 void Triangle::init() {
 	// Construct triangle. These vectors can go out of scope after we have send all data to the graphics card.
 	const std::vector<glm::vec3> vertices = { glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.7320f, 0.0f) };
-	const std::vector<glm::vec3> colors = { glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f) };
+	const std::vector<glm::vec3> colors = { glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f) };
 	const std::vector<GLushort>  indices = { 0, 1, 2 };
 
 	GLuint programId = program.getHandle();
@@ -80,7 +84,7 @@ void Triangle::init() {
 
 	// Unbind vertex array object (back to default).
 	glBindVertexArray(0);
-	
+
 }
 
 void Triangle::render(glm::mat4x4 projection, glm::mat4x4 view) {

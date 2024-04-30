@@ -17,7 +17,7 @@
 // Standard window width
 const int WINDOW_WIDTH  = 640;
 // Standard window height
-const int WINDOW_HEIGHT = 480;
+const int WINDOW_HEIGHT = 640;
 // GLUT window id/handle
 int glutID = 0;
 
@@ -31,9 +31,76 @@ float zFar  = 100.0f;
 
 
 
+std::vector<Triangle*> faces;
+unsigned int n = 1; // Anzahl der Unterteilungsstufen [NICHT ZU HOCH MACHEN SONST STIRBT DEIN PC!]
+float sphereRadius = 1;
 
-Triangle triangle(program);
+void subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, int depth) {
+    if (depth <= 0) {
+        std::vector<glm::vec3> vertices = { v1, v2, v3 };
+        Triangle* t = new Triangle(program);
+        t->init();
+        t->setPositions(vertices);
+        faces.push_back(t);
+    }
+    else {
+        float scale = depth / (depth + 1.0f);
+        glm::vec3 L_LEFT = v1;
+        glm::vec3 L_RIGHT = v1 + scale * (v2 - v1);
+        glm::vec3 L_UP = v1 + scale * (v3 - v1);
+        subdivideTriangle(L_LEFT, L_RIGHT, L_UP, depth - 1);
 
+        glm::vec3 R_LEFT = v2 + scale * (v1 - v2);
+        glm::vec3 R_RIGHT = v2;
+        glm::vec3 R_UP = v2 + scale * (v3 - v2);
+        subdivideTriangle(R_LEFT, R_RIGHT, R_UP, depth - 1);
+
+        glm::vec3 M_LEFT = v3 + scale * (v1 - v3);
+        glm::vec3 M_RIGHT = v3 + scale * (v2 - v3);
+        glm::vec3 M_UP = v3;
+        subdivideTriangle(M_LEFT, M_RIGHT, M_UP, depth - 1);
+    }
+}
+
+void approximateSphere() {
+    subdivideTriangle({ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, -1.0f, 0.0f }, n);
+    subdivideTriangle({ 0.0f, 0.0f, 1.0f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, -1.0f, 0.0f }, n);
+    subdivideTriangle({ 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, -1.0f, 0.0f }, n);
+    subdivideTriangle({ -1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, -1.0f, 0.0f }, n);
+    subdivideTriangle({ 0.0f, 0.0f, 1.0f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, n);
+    subdivideTriangle({ -1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, 1.0f, 0.0f }, n);
+    subdivideTriangle({ 0.0f, 0.0f, -1.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, n);
+    subdivideTriangle({ 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, n);
+
+    for (int i = 0; i < faces.size(); i++) {
+        glm::vec3 points[3];
+        glBindBuffer(GL_ARRAY_BUFFER, faces[i]->positionBuffer);
+        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
+
+        glm::vec3 p1 = points[0];
+        glm::vec3 p2 = points[1];
+        glm::vec3 p3 = points[2];
+
+        float p1Length = sqrt(pow(p1.x,2.0f) + pow(p1.y,2.0f) + pow(p1.z,2.0f));
+        float p2Length = sqrt(pow(p2.x, 2.0f) + pow(p2.y, 2.0f) + pow(p2.z, 2.0f));
+        float p3Length = sqrt(pow(p3.x, 2.0f) + pow(p3.y, 2.0f) + pow(p3.z, 2.0f));
+
+        p1.x = sphereRadius * p1.x / p1Length;
+        p1.y = sphereRadius * p1.y / p1Length;
+        p1.z = sphereRadius * p1.z / p1Length;
+
+        p2.x = sphereRadius * p2.x / p2Length;
+        p2.y = sphereRadius * p2.y / p2Length;
+        p2.z = sphereRadius * p2.z / p2Length;
+
+        p3.x = sphereRadius * p3.x / p3Length;
+        p3.y = sphereRadius * p3.y / p3Length;
+        p3.z = sphereRadius * p3.z / p3Length;
+
+
+        faces[i]->setPositions({ p1, p2, p3 });
+    }
+}
 
 /*
  Initialization. Should return true if everything is ok and false if something went wrong.
@@ -66,20 +133,28 @@ bool init()
         std::cerr << program.log();
         return false;
     }
+    approximateSphere();
 
-    // Create all objects.
-    triangle.init();
-  
     return true;
 }
-
 /*
  Rendering.
  */
+
 void render()
 {
+    float rotationAngle = 1.0f / 60.0f;
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    triangle.render(projection, view);
+    for (Triangle* t : faces) {
+
+        t->rotate(rotationAngle);
+        t->render(projection, view);
+
+    }
+
+   
+    
+
 }
 
 void glutDisplay ()
@@ -169,7 +244,7 @@ int main(int argc, char** argv)
     // GLUT: Set callbacks for events.
     glutReshapeFunc(glutResize);
     glutDisplayFunc(glutDisplay);
-    //glutIdleFunc   (glutDisplay); // redisplay when idle
+    glutIdleFunc   (glutDisplay); // redisplay when idle
   
     glutKeyboardFunc(glutKeyboard);
   
