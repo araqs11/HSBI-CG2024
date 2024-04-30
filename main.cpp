@@ -34,7 +34,7 @@ float zFar  = 100.0f;
 
 std::vector<Triangle*> faces;
 unsigned int n = 1; // Anzahl der Unterteilungsstufen [NICHT ZU HOCH MACHEN SONST STIRBT DEIN PC!]
-float sphereRadius = 1;
+float sphereRadius = 0.5;
 
 void subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, int depth) {
     if (depth <= 0) {
@@ -144,11 +144,10 @@ bool init()
 
 void render()
 {
-    float rotationAngle = 1.0f / 60.0f;
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     for (Triangle* t : faces) {
 
-        t->rotate(rotationAngle);
+        t->rotate(1.0f / 60.0f, { 0.0f, 1.0f, 0.0f });
         t->render(projection, view);
 
     }
