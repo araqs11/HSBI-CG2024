@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <vector>
 
@@ -110,25 +111,25 @@ bool init()
     // OpenGL: Set "background" color and enable depth testing.
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glEnable(GL_DEPTH_TEST);
-  
+
     // Construct view matrix.
     glm::vec3 eye(0.0f, 0.0f, 4.0f);
     glm::vec3 center(0.0f, 0.0f, 0.0f);
     glm::vec3 up(0.0f, 1.0f, 0.0f);
-  
+
     view = glm::lookAt(eye, center, up);
-  
+
     // Create a shader program and set light direction.
     if (!program.compileShaderFromFile("shader/simple.vert", cg::GLSLShader::VERTEX)) {
         std::cerr << program.log();
         return false;
     }
-  
+
     if (!program.compileShaderFromFile("shader/simple.frag", cg::GLSLShader::FRAGMENT)) {
         std::cerr << program.log();
         return false;
     }
-  
+
     if (!program.link()) {
         std::cerr << program.log();
         return false;

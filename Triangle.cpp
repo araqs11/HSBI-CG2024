@@ -49,6 +49,7 @@ void Triangle::init() {
 	const std::vector<glm::vec3> vertices = { glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.7320f, 0.0f) };
 	const std::vector<glm::vec3> colors = { glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f) };
 	const std::vector<GLushort>  indices = { 0, 1, 2 };
+	
 
 	GLuint programId = program.getHandle();
 	GLuint pos;
@@ -100,5 +101,5 @@ void Triangle::render(glm::mat4x4 projection, glm::mat4x4 view) {
 	glBindVertexArray(vao);
 	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_SHORT, 0);
 	glBindVertexArray(0);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Setzt den Rendermodus auf Linien
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Setzt den Rendermodus auf Fill
 }
