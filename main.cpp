@@ -33,10 +33,13 @@ float zFar  = 100.0f;
 
 
 std::vector<Triangle*> faces;
-unsigned int n = 1; // Anzahl der Unterteilungsstufen [NICHT ZU HOCH MACHEN SONST STIRBT DEIN PC!]
-float sphereRadius = 1.0f;
+unsigned int n = 4; // Anzahl der Unterteilungsstufen [NICHT ZU HOCH MACHEN SONST STIRBT DEIN PC!]
+float sphereRadius = 2.0f;  // Skaliert die größe des Würfels
+
 
 void subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, int depth) {
+    //Sobald die Erforderte tiefe erreicht wurde werden die bis hierhin errechneten Punkte in Tatsächliche dreiecks Objekte eingeschrieben,
+    // und dann im globalen vector "faces" abgespeichert
     if (depth <= 0) {
         std::vector<glm::vec3> vertices = { v1, v2, v3 };
         Triangle* t = new Triangle(program);
@@ -44,7 +47,9 @@ void subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3
         t->setPositions(vertices);
         faces.push_back(t);
     }
-    else {
+    else { // Teilt ein Dreieck/drei Punkte in 3/4 kleinere auf.Dies geschieht dadurch das eine Ecke des Originalen dreiecks (P1),
+           //mit zwei errechneten Punkten die mittig auf den Vektoren von P1 zu P2 und P1 zu P3 liegen danach werden diese errechneten dreiecke Rekursiv wieder augeteilt.
+           // hierbei ist beachten das die neu errechneten Punkte der dreiecke noch nicht die passende entfernung zum mittelpunkt haben. Diese wird später ausgerechnet
         float scale = depth / (depth + 1.0f);
         glm::vec3 L_LEFT = v1;
         glm::vec3 L_RIGHT = v1 + scale * (v2 - v1);
@@ -64,6 +69,7 @@ void subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3
 }
 
 void approximateSphere() {
+    //Starte werte für Sphere mit 8 Seiten
     subdivideTriangle({ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, -1.0f, 0.0f }, n);
     subdivideTriangle({ 0.0f, 0.0f, 1.0f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, -1.0f, 0.0f }, n);
     subdivideTriangle({ 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, -1.0f, 0.0f }, n);
@@ -73,15 +79,18 @@ void approximateSphere() {
     subdivideTriangle({ 0.0f, 0.0f, -1.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, n);
     subdivideTriangle({ 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, n);
 
+    //iteriert durch die abgespeicherten dreiecke durch und fixt die Position der Punkte durch anpassung der Entfernung zum mittelpunkt
     for (int i = 0; i < faces.size(); i++) {
         glm::vec3 points[3];
         glBindBuffer(GL_ARRAY_BUFFER, faces[i]->positionBuffer);
         glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
 
-        glm::vec3 p1 = glm::normalize(points[0]);
-        glm::vec3 p2 = glm::normalize(points[1]);
-        glm::vec3 p3 = glm::normalize(points[2]);
+        //normalisiert den Vector zu der länge 1 und multiplieziertdann wieder mit den gewünschten Radius
+        glm::vec3 p1 = glm::normalize(points[0]) * sphereRadius;
+        glm::vec3 p2 = glm::normalize(points[1]) * sphereRadius;
+        glm::vec3 p3 = glm::normalize(points[2]) * sphereRadius;
 
+        //Speichert die neuen Positionen ab
         faces[i]->setPositions({ p1, p2, p3 });
     }
 }
