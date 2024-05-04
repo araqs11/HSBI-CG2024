@@ -35,6 +35,11 @@ glm::mat4x4 projection;
 float zNear = 0.1f;
 float zFar  = 100.0f;
 
+glm::vec3 eyePoint(0.0f, 1.0f, 5.0f);
+glm::vec3 centerPoint = eyePoint - glm::normalize(eyePoint);
+glm::vec3 up(0.0f, 1.0f, 0.0f);
+float mouseSpeed = 0.01f;
+
 std::vector<Triangle*> faces;
 unsigned int n = 4; // Anzahl der Unterteilungsstufen [NICHT ZU HOCH MACHEN SONST STIRBT DEIN PC!]
 float sphereRadius = 1.0f;  // Skaliert die größe der Kugel
@@ -314,6 +319,10 @@ void glutResize (int width, int height)
  */
 void glutKeyboard(unsigned char keycode, int x, int y)
 {
+    glm::vec3 cameraDirection;
+    glm::vec3 cameraHorizontal;
+    glm::vec3 cameraUp;
+
     glm::vec3 xAxisPoints[2];
     glm::vec3 yAxisPoints[2];
     glm::vec3 zAxisPoints[2];
@@ -323,10 +332,13 @@ void glutKeyboard(unsigned char keycode, int x, int y)
         return;
 
     case '+':
-        // do something
+        n++;
+        approximateSphere();
         break;
     case '-':
-        // do something
+        n--;
+        approximateSphere();
+        break;
     case 'x':
         rotateAroundGlobalCS(glm::radians(1.0f), { 1.0f, 0.0f, 0.0f }); //Feste globale Achse
         break;
@@ -351,6 +363,28 @@ void glutKeyboard(unsigned char keycode, int x, int y)
         glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(zAxisPoints), zAxisPoints);
         rotateAroundLocalCS(glm::radians(1.0f), zAxisPoints[1]); //variierende lokale Achse
         break;
+    case 'w':
+        eyePoint -= (eyePoint - centerPoint) * 0.1f;
+        centerPoint = eyePoint - glm::normalize(eyePoint - centerPoint);
+        break;
+    case 'a':
+        cameraDirection = glm::normalize(eyePoint - centerPoint);
+        cameraHorizontal = glm::normalize(glm::cross(up, cameraDirection)) * -0.03f;
+        centerPoint += cameraHorizontal;
+        eyePoint += cameraHorizontal;
+        centerPoint = eyePoint - glm::normalize(eyePoint - centerPoint);
+        break;
+    case 's':
+        eyePoint += (eyePoint - centerPoint) * 0.1f;
+        centerPoint = eyePoint - glm::normalize(eyePoint - centerPoint);
+        break;
+    case 'd':
+        cameraDirection = glm::normalize(eyePoint - centerPoint);
+        cameraHorizontal = glm::normalize(glm::cross(up, cameraDirection)) * 0.03f;
+        centerPoint += cameraHorizontal;
+        eyePoint += cameraHorizontal;
+        centerPoint = eyePoint - glm::normalize(eyePoint - centerPoint);
+        break;
     case 'k':
         cs_switch = !cs_switch;
         break;
@@ -358,7 +392,53 @@ void glutKeyboard(unsigned char keycode, int x, int y)
         resetRotation();
         break;
     }
+    view = glm::lookAt(eyePoint, centerPoint, up);
     glutPostRedisplay();
+}
+
+void glutMotion(int x, int y) {
+    float w = WINDOW_WIDTH / 2.0f;
+    float h = WINDOW_HEIGHT / 2.0f;
+    float xMotionPercent = x - w >= 0 ? 1 / (w / x) : w / x;
+    float yMotionPercent = y - h >= 0 ? 1 / (h / y) : h / y;
+
+    glm::vec3 cameraDirection;
+    glm::vec3 cameraHorizontal;
+    glm::vec3 cameraUp;
+    std::cout << xMotionPercent << " / " << yMotionPercent << std::endl;
+    if (x < w) {
+        cameraDirection = glm::normalize(eyePoint - centerPoint);
+        cameraHorizontal = glm::normalize(glm::cross(up, cameraDirection));
+        centerPoint += cameraHorizontal * -mouseSpeed * xMotionPercent;
+    }
+    else if (x > w) {
+        cameraDirection = glm::normalize(eyePoint - centerPoint);
+        cameraHorizontal = glm::normalize(glm::cross(up, cameraDirection));
+        centerPoint += cameraHorizontal * mouseSpeed * xMotionPercent;
+    }
+    if (y > h) {
+        cameraDirection = glm::normalize(eyePoint - centerPoint);
+        cameraHorizontal = glm::normalize(glm::cross(up, cameraDirection));
+        cameraUp = glm::normalize(glm::cross(cameraHorizontal, cameraDirection));
+        centerPoint += cameraUp * mouseSpeed * yMotionPercent;
+    }
+    else if (y < h) {
+        cameraDirection = glm::normalize(eyePoint - centerPoint);
+        cameraHorizontal = glm::normalize(glm::cross(up, cameraDirection));
+        cameraUp = glm::normalize(glm::cross(cameraHorizontal, cameraDirection));
+        centerPoint += cameraUp * -mouseSpeed * yMotionPercent;
+    }
+    view = glm::lookAt(eyePoint, centerPoint, up);
+    glutWarpPointer(w, h);
+    glutPostRedisplay();
+}
+void glutMouse(int button, int status, int x, int y) {
+    if (button == GLUT_LEFT_BUTTON && status == GLUT_DOWN) {
+        glutSetCursor(GLUT_CURSOR_NONE);
+    }
+    else if (button == GLUT_LEFT_BUTTON && status == GLUT_UP) {
+        glutSetCursor(GLUT_CURSOR_LEFT_ARROW);
+    }
 }
 
 int main(int argc, char** argv)
@@ -402,6 +482,8 @@ int main(int argc, char** argv)
     glutDisplayFunc(glutDisplay);
     glutIdleFunc   (glutDisplay); // redisplay when idle
   
+    glutMotionFunc(glutMotion);
+    glutMouseFunc(glutMouse);
     glutKeyboardFunc(glutKeyboard); 
   
     // init vertex-array-objects.
