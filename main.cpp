@@ -14,6 +14,7 @@
 #include "GLTools.h"
 
 #include "Triangle.h"
+#include "Line.h"
 
 // Standard window width
 const int WINDOW_WIDTH  = 640;
@@ -29,8 +30,6 @@ glm::mat4x4 projection;
 
 float zNear = 0.1f;
 float zFar  = 100.0f;
-
-
 
 std::vector<Triangle*> faces;
 unsigned int n = 4; // Anzahl der Unterteilungsstufen [NICHT ZU HOCH MACHEN SONST STIRBT DEIN PC!]
@@ -138,9 +137,8 @@ void render()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     for (Triangle* t : faces) {
-
-        t->rotate(1.0f / 60.0f, { 0.0f, 1.0f, 0.0f });
-        t->render(projection, view);
+        //t->rotate(1.0f / 60.0f, { 0.0f, 1.0f, 0.0f });
+        //t->render(projection, view);
 
     }
 
