@@ -228,6 +228,14 @@ void rotateAroundGlobalCS(float angle, glm::vec3 axis) {
     z_AxisLocal.setPositions({ {0.0f,0.0f,0.0f}, rotationMatrix * zAxisPoints[1] });
 }
 
+void resetRotation() {
+    initLocalCS();
+    for (Triangle* t : faces) {
+        delete t;
+    }
+    faces.clear();
+    approximateSphere();
+}
 /*
  Initialization. Should return true if everything is ok and false if something went wrong.
  */
@@ -304,7 +312,7 @@ void glutResize (int width, int height)
 /*
  Callback for char input.
  */
-void glutKeyboard (unsigned char keycode, int x, int y)
+void glutKeyboard(unsigned char keycode, int x, int y)
 {
     glm::vec3 xAxisPoints[2];
     glm::vec3 yAxisPoints[2];
@@ -330,21 +338,24 @@ void glutKeyboard (unsigned char keycode, int x, int y)
         break;
     case 'X':
         glBindBuffer(GL_ARRAY_BUFFER, x_AxisLocal.positionBuffer);
-        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(xAxisPoints), xAxisPoints); 
+        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(xAxisPoints), xAxisPoints);
         rotateAroundLocalCS(glm::radians(1.0f), xAxisPoints[1]); //variierende lokale Achse
         break;
     case 'Y':
         glBindBuffer(GL_ARRAY_BUFFER, y_AxisLocal.positionBuffer);
-        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(yAxisPoints), yAxisPoints); 
+        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(yAxisPoints), yAxisPoints);
         rotateAroundLocalCS(glm::radians(1.0f), yAxisPoints[1]); //variierende lokale Achse
         break;
     case 'Z':
         glBindBuffer(GL_ARRAY_BUFFER, z_AxisLocal.positionBuffer);
-        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(zAxisPoints), zAxisPoints); 
+        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(zAxisPoints), zAxisPoints);
         rotateAroundLocalCS(glm::radians(1.0f), zAxisPoints[1]); //variierende lokale Achse
         break;
     case 'k':
         cs_switch = !cs_switch;
+        break;
+    case 'n':
+        resetRotation();
         break;
     }
     glutPostRedisplay();
