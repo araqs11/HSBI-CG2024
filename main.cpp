@@ -34,7 +34,7 @@ float zFar  = 100.0f;
 
 std::vector<Triangle*> faces;
 unsigned int n = 4; // Anzahl der Unterteilungsstufen [NICHT ZU HOCH MACHEN SONST STIRBT DEIN PC!]
-float sphereRadius = 2.0f;  // Skaliert die größe des Würfels
+float sphereRadius = 1.0f;  // Skaliert die größe der Kugel
 
 
 void subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, int depth) {
@@ -47,9 +47,9 @@ void subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3
         t->setPositions(vertices);
         faces.push_back(t);
     }
-    else { // Teilt ein Dreieck/drei Punkte in 3/4 kleinere auf.Dies geschieht dadurch das eine Ecke des Originalen dreiecks (P1),
-           //mit zwei errechneten Punkten die mittig auf den Vektoren von P1 zu P2 und P1 zu P3 liegen danach werden diese errechneten dreiecke Rekursiv wieder augeteilt.
-           // hierbei ist beachten das die neu errechneten Punkte der dreiecke noch nicht die passende entfernung zum mittelpunkt haben. Diese wird später ausgerechnet
+    else { // Teilt ein Dreieck in 3 Dreiecke der vorherigen Tiefe auf.Dies geschieht dadurch, dass eine Ecke des originalen Dreiecks (P1),
+           // mit zwei errechneten Punkten die auf den Vektoren von P1 zu P2 und P1 zu P3 liegen. Danach werden diese errechneten Dreiecke rekursiv wieder aufgeteilt.
+           // hierbei ist zu beachten, dass die neu errechneten Punkte der Dreiecke noch nicht die passende Entfernung zum Mittelpunkt haben. Diese wird später ausgerechnet
         float scale = depth / (depth + 1.0f);
         glm::vec3 L_LEFT = v1;
         glm::vec3 L_RIGHT = v1 + scale * (v2 - v1);
