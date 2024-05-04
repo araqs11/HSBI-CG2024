@@ -17,7 +17,7 @@ void Line::setPositions(std::vector<glm::vec3> positions) {
 	GLuint programId = program.getHandle();
 	GLuint pos = glGetAttribLocation(programId, "position");
 	glEnableVertexAttribArray(pos);
-	glVertexAttribPointer(pos, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glBindVertexArray(0);
 }
 
@@ -40,7 +40,7 @@ void Line::rotate(float angle, glm::vec3 axis) {
 void Line::init() {
 	// Construct triangle. These vectors can go out of scope after we have send all data to the graphics card.
 	const std::vector<glm::vec3> vertices = { glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)};
-	const std::vector<glm::vec3> colors = { glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f) };
+	const std::vector<glm::vec3> colors = { glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f) };
 	const std::vector<GLushort>  indices = {0, 1};
 
 
@@ -59,7 +59,7 @@ void Line::init() {
 	// Bind it to position.
 	pos = glGetAttribLocation(programId, "position");
 	glEnableVertexAttribArray(pos);
-	glVertexAttribPointer(pos, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
 	// Step 2: Create vertex buffer object for color attribute and bind it to...
 	glGenBuffers(1, &colorBuffer);
@@ -90,7 +90,11 @@ void Line::render(glm::mat4x4 projection, glm::mat4x4 view) {
 	program.setUniform("mvp", mvp);
 
 	// Bind vertex array object so we can render the 1 triangle.
+	
 	glBindVertexArray(vao);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glDrawElements(GL_LINES, 2, GL_UNSIGNED_SHORT, 0);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glBindVertexArray(0);
+	
 }

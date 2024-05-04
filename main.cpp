@@ -35,6 +35,7 @@ std::vector<Triangle*> faces;
 unsigned int n = 4; // Anzahl der Unterteilungsstufen [NICHT ZU HOCH MACHEN SONST STIRBT DEIN PC!]
 float sphereRadius = 1.0f;  // Skaliert die größe der Kugel
 
+Line x_AxisLocal(program), y_AxisLocal(program), z_AxisLocal(program);
 
 void subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, int depth) {
     //Sobald die Erforderte tiefe erreicht wurde werden die bis hierhin errechneten Punkte in Tatsächliche dreiecks Objekte eingeschrieben,
@@ -94,6 +95,38 @@ void approximateSphere() {
     }
 }
 
+
+void initLocalCS() {
+    x_AxisLocal.init();
+    x_AxisLocal.setPositions({ {0.0f, 0.0f, 0.0f}, {0.5f, 0.0f, 0.0f} });
+    x_AxisLocal.setColors({ {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f} });
+
+    y_AxisLocal.init();
+    y_AxisLocal.setPositions({ {0.0f, 0.0f, 0.0f}, {0.0f, 0.5f, 0.0f} });
+    y_AxisLocal.setColors({ {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f} });
+
+    z_AxisLocal.init();
+    z_AxisLocal.setPositions({ {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.5f} });
+    z_AxisLocal.setColors({ {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f} });
+}
+
+/*Rendert das globale Koordinatensystem bei (0,0,0)*/
+void drawLocalCS() {
+
+    x_AxisLocal.render(projection, view);
+    y_AxisLocal.render(projection, view);
+    z_AxisLocal.render(projection, view);
+
+}
+
+void rotateLocalCS(float angle, glm::vec3 axis) {
+
+    x_AxisLocal.rotate(angle, axis);
+    y_AxisLocal.rotate(angle, axis);
+    z_AxisLocal.rotate(angle, axis);
+
+}
+
 /*
  Initialization. Should return true if everything is ok and false if something went wrong.
  */
@@ -125,6 +158,7 @@ bool init()
         std::cerr << program.log();
         return false;
     }
+    initLocalCS();
     approximateSphere();
 
     return true;
@@ -136,13 +170,12 @@ bool init()
 void render()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    drawLocalCS();
+    rotateLocalCS(1.0f / 60.0f, { 0.0f, 1.0f, 1.0f });
     for (Triangle* t : faces) {
-        //t->rotate(1.0f / 60.0f, { 0.0f, 1.0f, 0.0f });
-        //t->render(projection, view);
-
+        t->rotate(1.0f / 60.0f, { 0.0f, 1.0f, 1.0f });
+        t->render(projection, view);
     }
-
-   
     
 
 }
@@ -236,14 +269,14 @@ int main(int argc, char** argv)
     glutDisplayFunc(glutDisplay);
     glutIdleFunc   (glutDisplay); // redisplay when idle
   
-    glutKeyboardFunc(glutKeyboard);
+    glutKeyboardFunc(glutKeyboard); 
   
     // init vertex-array-objects.
     bool result = init();
     if (!result) {
         return -2;
     }
-
+        
     // GLUT: Loop until the user closes the window
     // rendering & event handling
     glutMainLoop ();
