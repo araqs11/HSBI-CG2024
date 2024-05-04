@@ -1,2 +1,4 @@
 ﻿  main.cpp
+E:\Pm-Dungeon-Gruppe\HSBI-CG2024\main.cpp(441,24): warning C4244: "Argument": Konvertierung von "float" in "int", möglicher Datenverlust
+E:\Pm-Dungeon-Gruppe\HSBI-CG2024\main.cpp(441,21): warning C4244: "Argument": Konvertierung von "float" in "int", möglicher Datenverlust
   Blatt01.vcxproj -> E:\Pm-Dungeon-Gruppe\HSBI-CG2024\x64\Debug\Blatt01.exe

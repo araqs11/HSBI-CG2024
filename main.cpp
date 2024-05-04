@@ -80,6 +80,10 @@ void subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3
 }
 
 void approximateSphere() {
+    for (Triangle* t : faces) {
+        delete t;
+    }
+    faces.clear();
     //Starte werte für Sphere mit 8 Seiten
     subdivideTriangle({ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, -1.0f, 0.0f }, n);
     subdivideTriangle({ 0.0f, 0.0f, 1.0f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, -1.0f, 0.0f }, n);
@@ -405,7 +409,6 @@ void glutMotion(int x, int y) {
     glm::vec3 cameraDirection;
     glm::vec3 cameraHorizontal;
     glm::vec3 cameraUp;
-    std::cout << xMotionPercent << " / " << yMotionPercent << std::endl;
     if (x < w) {
         cameraDirection = glm::normalize(eyePoint - centerPoint);
         cameraHorizontal = glm::normalize(glm::cross(up, cameraDirection));
@@ -420,13 +423,19 @@ void glutMotion(int x, int y) {
         cameraDirection = glm::normalize(eyePoint - centerPoint);
         cameraHorizontal = glm::normalize(glm::cross(up, cameraDirection));
         cameraUp = glm::normalize(glm::cross(cameraHorizontal, cameraDirection));
-        centerPoint += cameraUp * mouseSpeed * yMotionPercent;
+        std::cout << cameraUp.y << std::endl;
+        if (cameraUp.y < -0.1f) {
+            centerPoint += cameraUp * mouseSpeed * yMotionPercent;
+            }
     }
     else if (y < h) {
         cameraDirection = glm::normalize(eyePoint - centerPoint);
         cameraHorizontal = glm::normalize(glm::cross(up, cameraDirection));
         cameraUp = glm::normalize(glm::cross(cameraHorizontal, cameraDirection));
-        centerPoint += cameraUp * -mouseSpeed * yMotionPercent;
+        std::cout << cameraUp.y << std::endl;
+        if (cameraUp.y < -0.1f) {
+            centerPoint += cameraUp * -mouseSpeed * yMotionPercent;
+        }
     }
     view = glm::lookAt(eyePoint, centerPoint, up);
     glutWarpPointer(w, h);
