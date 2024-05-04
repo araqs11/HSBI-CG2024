@@ -9,6 +9,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
+#include <glm/gtx/vector_angle.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
+
 
 #include "GLSLProgram.h"
 #include "GLTools.h"
@@ -35,9 +39,9 @@ std::vector<Triangle*> faces;
 unsigned int n = 4; // Anzahl der Unterteilungsstufen [NICHT ZU HOCH MACHEN SONST STIRBT DEIN PC!]
 float sphereRadius = 1.0f;  // Skaliert die größe der Kugel
 
-Line x_AxisLocal(program), y_AxisLocal(program), z_AxisLocal(program);
-Line x_AxisGlobal(program), y_AxisGlobal(program), z_AxisGlobal(program);
-bool cs_switch = GL_FALSE;
+Line x_AxisLocal(program), y_AxisLocal(program), z_AxisLocal(program); // lokale x-, y- und z-Achse
+Line x_AxisGlobal(program), y_AxisGlobal(program), z_AxisGlobal(program);// globale x-, y- und z-Achse
+bool cs_switch = GL_FALSE; // Bestimmt welches Koordinatensystem angezeigt wird
 
 void subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, int depth) {
     //Sobald die Erforderte tiefe erreicht wurde werden die bis hierhin errechneten Punkte in Tatsächliche dreiecks Objekte eingeschrieben,
@@ -97,7 +101,7 @@ void approximateSphere() {
     }
 }
 
-
+//Erstellt das lokale Koordinatensystem
 void initLocalCS() {
     x_AxisLocal.init();
     x_AxisLocal.setPositions({ {0.0f, 0.0f, 0.0f}, {0.5f, 0.0f, 0.0f} });
@@ -112,6 +116,7 @@ void initLocalCS() {
     z_AxisLocal.setColors({ {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f} });
 }
 
+//Erstellt das globale Koordinatensystem
 void initGlobalCS() {
     x_AxisGlobal.init();
     x_AxisGlobal.setPositions({ {0.0f, 0.0f, 0.0f}, {0.5f, 0.0f, 0.0f} });
@@ -126,7 +131,7 @@ void initGlobalCS() {
     z_AxisGlobal.setColors({ {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f} });
 }
 
-/*Rendert das globale Koordinatensystem bei (0,0,0)*/
+//Rendert das lokale Koordinatensystem bei (0,0,0)
 void drawLocalCS() {
 
     x_AxisLocal.render(projection, view);
@@ -135,6 +140,7 @@ void drawLocalCS() {
 
 }
 
+//Rendert das globale Koordinatensystem bei (0,0,0)
 void drawGlobalCS() {
 
     x_AxisGlobal.render(projection, view);
@@ -143,20 +149,83 @@ void drawGlobalCS() {
 
 }
 
-void rotateLocalCS(float angle, glm::vec3 axis) {
-
-    for (Triangle* t : faces) {
-        t->rotate(angle, axis);
+//Rotationsmatrizen für Rotation um x/y/z - Achse
+glm::mat3 getRotMatrix(float angle, glm::vec3 axis) {
+    if (axis.x > 0.0f) {
+        return {
+            1, 0, 0,
+            0, cos(angle), -sin(angle),
+            0, sin(angle), cos(angle) };
     }
-
+    if (axis.y > 0.0f) {
+        return {cos(angle), 0, sin(angle),
+            0, 1, 0,
+            -sin(angle), 0, cos(angle)};
+    }
+    if (axis.z > 0.0f) {
+        return { cos(angle), -sin(angle), 0,
+        sin(angle), cos(angle), 0,
+        0, 0, 1 };
+    }
+    return glm::mat3(1.0f);
 }
 
-void rotateGlobalCS(float angle, glm::vec3 axis) {
-    x_AxisLocal.rotate(angle, axis);
-    y_AxisLocal.rotate(angle, axis);
-    z_AxisLocal.rotate(angle, axis);
+//Rotiert die Kugel um das lokale Koordinatensystem
+//Richtet sich nach den lokalen Achsen, welche durch globale Rotation geändert werden
+void rotateAroundLocalCS(float angle, glm::vec3 axis) {
+    axis = glm::normalize(axis);
 
-    rotateLocalCS(angle, axis);
+    glm::mat3 rotationMatrix = glm::mat3(1.0f);
+
+    float cosTheta = cos(angle);
+    float sinTheta = sin(angle);
+
+    rotationMatrix[0][0] = cosTheta + (1 - cosTheta) * axis.x * axis.x;
+    rotationMatrix[0][1] = (1 - cosTheta) * axis.x * axis.y - sinTheta * axis.z;
+    rotationMatrix[0][2] = (1 - cosTheta) * axis.x * axis.z + sinTheta * axis.y;
+    rotationMatrix[1][0] = (1 - cosTheta) * axis.y * axis.x + sinTheta * axis.z;
+    rotationMatrix[1][1] = cosTheta + (1 - cosTheta) * axis.y * axis.y;
+    rotationMatrix[1][2] = (1 - cosTheta) * axis.y * axis.z - sinTheta * axis.x;
+    rotationMatrix[2][0] = (1 - cosTheta) * axis.z * axis.x - sinTheta * axis.y;
+    rotationMatrix[2][1] = (1 - cosTheta) * axis.z * axis.y + sinTheta * axis.x;
+    rotationMatrix[2][2] = cosTheta + (1 - cosTheta) * axis.z * axis.z;
+
+    for (Triangle* t : faces) {
+        glm::vec3 points[3];
+        glBindBuffer(GL_ARRAY_BUFFER, t->positionBuffer);
+        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
+
+        t->setPositions({ rotationMatrix * points[0], rotationMatrix * points[1], rotationMatrix * points[2] });
+    }
+}
+
+//Rotiert die Kugel um das globale Koordinatensystem
+//Rotiert dabei die lokalen Koordinatenachsen mit
+void rotateAroundGlobalCS(float angle, glm::vec3 axis) {
+    glm::mat3 rotationMatrix = getRotMatrix(angle, axis);
+    for (Triangle* t : faces) {
+        glm::vec3 points[3];
+        glBindBuffer(GL_ARRAY_BUFFER, t->positionBuffer);
+        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
+
+        t->setPositions({ rotationMatrix * points[0], rotationMatrix * points[1], rotationMatrix * points[2] });
+    }
+
+    glm::vec3 xAxisPoints[2];
+    glBindBuffer(GL_ARRAY_BUFFER, x_AxisLocal.positionBuffer);
+    glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(xAxisPoints), xAxisPoints);
+
+    glm::vec3 yAxisPoints[2];
+    glBindBuffer(GL_ARRAY_BUFFER, y_AxisLocal.positionBuffer);
+    glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(yAxisPoints), yAxisPoints);
+
+    glm::vec3 zAxisPoints[2];
+    glBindBuffer(GL_ARRAY_BUFFER, z_AxisLocal.positionBuffer);
+    glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(zAxisPoints), zAxisPoints);
+
+    x_AxisLocal.setPositions({ {0.0f,0.0f,0.0f}, rotationMatrix * xAxisPoints[1] });
+    y_AxisLocal.setPositions({ {0.0f,0.0f,0.0f}, rotationMatrix * yAxisPoints[1] });
+    z_AxisLocal.setPositions({ {0.0f,0.0f,0.0f}, rotationMatrix * zAxisPoints[1] });
 }
 
 /*
@@ -204,10 +273,6 @@ void render()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    rotateGlobalCS(1.0f / 60.0f, { 0.0f, 0.0f, 1.0f });
-    rotateLocalCS(1.0f / 60.0f, { 0.0f, 1.0f, 0.0f });
-
-
     cs_switch == 0 ? drawGlobalCS() : drawLocalCS();
     
     for (Triangle* t : faces) {
@@ -241,6 +306,9 @@ void glutResize (int width, int height)
  */
 void glutKeyboard (unsigned char keycode, int x, int y)
 {
+    glm::vec3 xAxisPoints[2];
+    glm::vec3 yAxisPoints[2];
+    glm::vec3 zAxisPoints[2];
     switch (keycode) {
     case 27: // ESC
         glutDestroyWindow(glutID);
@@ -251,15 +319,29 @@ void glutKeyboard (unsigned char keycode, int x, int y)
         break;
     case '-':
         // do something
-        break;
     case 'x':
-        // do something
+        rotateAroundGlobalCS(glm::radians(1.0f), { 1.0f, 0.0f, 0.0f }); //Feste globale Achse
         break;
     case 'y':
-        // do something
+        rotateAroundGlobalCS(glm::radians(1.0f), { 0.0f, 1.0f, 0.0f }); //Feste globale Achse
         break;
     case 'z':
-        // do something
+        rotateAroundGlobalCS(glm::radians(1.0f), { 0.0f, 0.0f, 1.0f }); //Feste globale Achse
+        break;
+    case 'X':
+        glBindBuffer(GL_ARRAY_BUFFER, x_AxisLocal.positionBuffer);
+        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(xAxisPoints), xAxisPoints); 
+        rotateAroundLocalCS(glm::radians(1.0f), xAxisPoints[1]); //variierende lokale Achse
+        break;
+    case 'Y':
+        glBindBuffer(GL_ARRAY_BUFFER, y_AxisLocal.positionBuffer);
+        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(yAxisPoints), yAxisPoints); 
+        rotateAroundLocalCS(glm::radians(1.0f), yAxisPoints[1]); //variierende lokale Achse
+        break;
+    case 'Z':
+        glBindBuffer(GL_ARRAY_BUFFER, z_AxisLocal.positionBuffer);
+        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(zAxisPoints), zAxisPoints); 
+        rotateAroundLocalCS(glm::radians(1.0f), zAxisPoints[1]); //variierende lokale Achse
         break;
     case 'k':
         cs_switch = !cs_switch;
