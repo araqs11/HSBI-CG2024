@@ -37,6 +37,7 @@ float sphereRadius = 1.0f;  // Skaliert die größe der Kugel
 
 Line x_AxisLocal(program), y_AxisLocal(program), z_AxisLocal(program);
 Line x_AxisGlobal(program), y_AxisGlobal(program), z_AxisGlobal(program);
+bool cs_switch = GL_FALSE;
 
 void subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, int depth) {
     //Sobald die Erforderte tiefe erreicht wurde werden die bis hierhin errechneten Punkte in Tatsächliche dreiecks Objekte eingeschrieben,
@@ -144,10 +145,6 @@ void drawGlobalCS() {
 
 void rotateLocalCS(float angle, glm::vec3 axis) {
 
-    x_AxisLocal.rotate(angle, axis);
-    y_AxisLocal.rotate(angle, axis);
-    z_AxisLocal.rotate(angle, axis);
-
     for (Triangle* t : faces) {
         t->rotate(angle, axis);
     }
@@ -155,10 +152,9 @@ void rotateLocalCS(float angle, glm::vec3 axis) {
 }
 
 void rotateGlobalCS(float angle, glm::vec3 axis) {
-
-    x_AxisGlobal.rotate(angle, axis);
-    y_AxisGlobal.rotate(angle, axis);
-    z_AxisGlobal.rotate(angle, axis);
+    x_AxisLocal.rotate(angle, axis);
+    y_AxisLocal.rotate(angle, axis);
+    z_AxisLocal.rotate(angle, axis);
 
     rotateLocalCS(angle, axis);
 }
@@ -197,7 +193,7 @@ bool init()
     initLocalCS();
     initGlobalCS();
     approximateSphere();
-    rotateLocalCS(90.0f, { 1.0f, 0.0f, 0.0f });
+    
     return true;
 }
 /*
@@ -208,16 +204,15 @@ void render()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    //rotateGlobalCS(1.0f / 60.0f, { 0.0f, 1.0f, 0.0f });
-    //drawGlobalCS();
-    
-    //rotateLocalCS(1.0f / 60.0f, { 1.0f, 1.0f, 0.0f });
-    drawLocalCS();
-    
+    rotateGlobalCS(1.0f / 60.0f, { 0.0f, 0.0f, 1.0f });
+    rotateLocalCS(1.0f / 60.0f, { 0.0f, 1.0f, 0.0f });
 
-    //for (Triangle* t : faces) {
-    //    t->render(projection, view);
-    //}
+
+    cs_switch == 0 ? drawGlobalCS() : drawLocalCS();
+    
+    for (Triangle* t : faces) {
+        t->render(projection, view);
+    }
     
 
 }
@@ -248,9 +243,9 @@ void glutKeyboard (unsigned char keycode, int x, int y)
 {
     switch (keycode) {
     case 27: // ESC
-        glutDestroyWindow ( glutID );
+        glutDestroyWindow(glutID);
         return;
-    
+
     case '+':
         // do something
         break;
@@ -265,6 +260,9 @@ void glutKeyboard (unsigned char keycode, int x, int y)
         break;
     case 'z':
         // do something
+        break;
+    case 'k':
+        cs_switch = !cs_switch;
         break;
     }
     glutPostRedisplay();
