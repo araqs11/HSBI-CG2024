@@ -36,6 +36,7 @@ unsigned int n = 4; // Anzahl der Unterteilungsstufen [NICHT ZU HOCH MACHEN SONS
 float sphereRadius = 1.0f;  // Skaliert die größe der Kugel
 
 Line x_AxisLocal(program), y_AxisLocal(program), z_AxisLocal(program);
+Line x_AxisGlobal(program), y_AxisGlobal(program), z_AxisGlobal(program);
 
 void subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, int depth) {
     //Sobald die Erforderte tiefe erreicht wurde werden die bis hierhin errechneten Punkte in Tatsächliche dreiecks Objekte eingeschrieben,
@@ -110,6 +111,20 @@ void initLocalCS() {
     z_AxisLocal.setColors({ {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f} });
 }
 
+void initGlobalCS() {
+    x_AxisGlobal.init();
+    x_AxisGlobal.setPositions({ {0.0f, 0.0f, 0.0f}, {0.5f, 0.0f, 0.0f} });
+    x_AxisGlobal.setColors({ {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f} });
+
+    y_AxisGlobal.init();
+    y_AxisGlobal.setPositions({ {0.0f, 0.0f, 0.0f}, {0.0f, 0.5f, 0.0f} });
+    y_AxisGlobal.setColors({ {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f} });
+
+    z_AxisGlobal.init();
+    z_AxisGlobal.setPositions({ {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.5f} });
+    z_AxisGlobal.setColors({ {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f} });
+}
+
 /*Rendert das globale Koordinatensystem bei (0,0,0)*/
 void drawLocalCS() {
 
@@ -119,12 +134,33 @@ void drawLocalCS() {
 
 }
 
+void drawGlobalCS() {
+
+    x_AxisGlobal.render(projection, view);
+    y_AxisGlobal.render(projection, view);
+    z_AxisGlobal.render(projection, view);
+
+}
+
 void rotateLocalCS(float angle, glm::vec3 axis) {
 
     x_AxisLocal.rotate(angle, axis);
     y_AxisLocal.rotate(angle, axis);
     z_AxisLocal.rotate(angle, axis);
 
+    for (Triangle* t : faces) {
+        t->rotate(angle, axis);
+    }
+
+}
+
+void rotateGlobalCS(float angle, glm::vec3 axis) {
+
+    x_AxisGlobal.rotate(angle, axis);
+    y_AxisGlobal.rotate(angle, axis);
+    z_AxisGlobal.rotate(angle, axis);
+
+    rotateLocalCS(angle, axis);
 }
 
 /*
@@ -159,8 +195,9 @@ bool init()
         return false;
     }
     initLocalCS();
+    initGlobalCS();
     approximateSphere();
-
+    rotateLocalCS(90.0f, { 1.0f, 0.0f, 0.0f });
     return true;
 }
 /*
@@ -170,12 +207,17 @@ bool init()
 void render()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    //rotateGlobalCS(1.0f / 60.0f, { 0.0f, 1.0f, 0.0f });
+    //drawGlobalCS();
+    
+    //rotateLocalCS(1.0f / 60.0f, { 1.0f, 1.0f, 0.0f });
     drawLocalCS();
-    rotateLocalCS(1.0f / 60.0f, { 0.0f, 1.0f, 1.0f });
-    for (Triangle* t : faces) {
-        t->rotate(1.0f / 60.0f, { 0.0f, 1.0f, 1.0f });
-        t->render(projection, view);
-    }
+    
+
+    //for (Triangle* t : faces) {
+    //    t->render(projection, view);
+    //}
     
 
 }
