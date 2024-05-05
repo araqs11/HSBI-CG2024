@@ -168,6 +168,7 @@
     <ClCompile Include="Line.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Object.cpp" />
+    <ClCompile Include="Sphere.cpp" />
     <ClCompile Include="Triangle.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -175,6 +176,7 @@
     <ClInclude Include="GLTools.h" />
     <ClInclude Include="Line.h" />
     <ClInclude Include="Object.h" />
+    <ClInclude Include="Sphere.h" />
     <ClInclude Include="Triangle.h" />
   </ItemGroup>
   <ItemGroup>

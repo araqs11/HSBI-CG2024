@@ -19,6 +19,7 @@
 
 #include "Triangle.h"
 #include "Line.h"
+#include "Sphere.h"
 
 // Standard window width
 const int WINDOW_WIDTH  = 640;
@@ -41,6 +42,7 @@ glm::vec3 up(0.0f, 1.0f, 0.0f);
 float mouseSpeed = 0.01f;
 
 std::vector<Triangle*> faces;
+Sphere ball(program);
 unsigned int n = 4; // Anzahl der Unterteilungsstufen [NICHT ZU HOCH MACHEN SONST STIRBT DEIN PC!]
 float sphereRadius = 1.0f;  // Skaliert die größe der Kugel
 
@@ -80,6 +82,11 @@ void subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3
 }
 
 void approximateSphere() {
+    std::vector<glm::vec3> vectors;
+    std::vector<glm::vec3> color;
+    std::vector<GLushort> indices;
+
+
     for (Triangle* t : faces) {
         delete t;
     }
@@ -107,7 +114,18 @@ void approximateSphere() {
 
         //Speichert die neuen Positionen ab
         faces[i]->setPositions({ p1, p2, p3 });
+
+        vectors.push_back(p1);
+        vectors.push_back(p2);
+        vectors.push_back(p3);
+        color.push_back({ 0.0f,255.0f,255.0f });
+        color.push_back({ 0.0f,255.0f,255.0f });
+        color.push_back({ 0.0f,255.0f,255.0f });
+        indices.push_back(3.0f * i);
+        indices.push_back(3.0f * i+1.0f);
+        indices.push_back(3.0f * i+2.0f);
     }
+    ball.init(vectors, color, indices);
 }
 
 //Erstellt das lokale Koordinatensystem
@@ -182,6 +200,9 @@ glm::mat3 getRotMatrix(float angle, glm::vec3 axis) {
 //Rotiert die Kugel um das lokale Koordinatensystem
 //Richtet sich nach den lokalen Achsen, welche durch globale Rotation geändert werden
 void rotateAroundLocalCS(float angle, glm::vec3 axis) {
+
+    std::vector<glm::vec3> vectors;
+
     axis = glm::normalize(axis);
 
     glm::mat3 rotationMatrix = glm::mat3(1.0f);
@@ -199,26 +220,57 @@ void rotateAroundLocalCS(float angle, glm::vec3 axis) {
     rotationMatrix[2][1] = (1 - cosTheta) * axis.z * axis.y + sinTheta * axis.x;
     rotationMatrix[2][2] = cosTheta + (1 - cosTheta) * axis.z * axis.z;
 
-    for (Triangle* t : faces) {
+    //Triangles
+    /*for (Triangle* t : faces) {
         glm::vec3 points[3];
         glBindBuffer(GL_ARRAY_BUFFER, t->positionBuffer);
         glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
 
         t->setPositions({ rotationMatrix * points[0], rotationMatrix * points[1], rotationMatrix * points[2] });
+    }*/
+    //Sphere
+    for (int i = 0; i < ball.indicesCount; i += 3) {
+        glm::vec3 points[3];
+        glBindBuffer(GL_ARRAY_BUFFER, ball.positionBuffer);
+        glGetBufferSubData(GL_ARRAY_BUFFER, i * sizeof(glm::vec3), sizeof(points), points);
+
+        vectors.push_back(rotationMatrix * points[0]);
+        vectors.push_back(rotationMatrix * points[1]);
+        vectors.push_back(rotationMatrix * points[2]);
     }
+
+    ball.setPositions(vectors);
 }
 
 //Rotiert die Kugel um das globale Koordinatensystem
 //Rotiert dabei die lokalen Koordinatenachsen mit
 void rotateAroundGlobalCS(float angle, glm::vec3 axis) {
+
+    std::vector<glm::vec3> vectors;
+    
     glm::mat3 rotationMatrix = getRotMatrix(angle, axis);
-    for (Triangle* t : faces) {
+
+    //Triangles
+    /*for (Triangle* t : faces) {
         glm::vec3 points[3];
         glBindBuffer(GL_ARRAY_BUFFER, t->positionBuffer);
         glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
 
         t->setPositions({ rotationMatrix * points[0], rotationMatrix * points[1], rotationMatrix * points[2] });
+    }*/
+
+    //Sphere
+    for (int i = 0; i < ball.indicesCount; i += 3) {
+        glm::vec3 points[3];
+        glBindBuffer(GL_ARRAY_BUFFER, ball.positionBuffer);
+        glGetBufferSubData(GL_ARRAY_BUFFER, i*sizeof(glm::vec3), sizeof(points), points);
+
+        vectors.push_back(rotationMatrix * points[0]);
+        vectors.push_back(rotationMatrix * points[1]);
+        vectors.push_back(rotationMatrix * points[2]);
     }
+
+    ball.setPositions(vectors);
 
     glm::vec3 xAxisPoints[2];
     glBindBuffer(GL_ARRAY_BUFFER, x_AxisLocal.positionBuffer);
@@ -254,12 +306,8 @@ bool init()
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glEnable(GL_DEPTH_TEST);
 
-    // Construct view matrix.
-    glm::vec3 eye(0.0f, 0.0f, 4.0f);
-    glm::vec3 center(0.0f, 0.0f, 0.0f);
-    glm::vec3 up(0.0f, 1.0f, 0.0f);
 
-    view = glm::lookAt(eye, center, up);
+    view = glm::lookAt(eyePoint, centerPoint, up);
 
     // Create a shader program and set light direction.
     if (!program.compileShaderFromFile("shader/simple.vert", cg::GLSLShader::VERTEX)) {
@@ -292,11 +340,10 @@ void render()
 
     cs_switch == 0 ? drawGlobalCS() : drawLocalCS();
     
-    for (Triangle* t : faces) {
+    /*for (Triangle* t : faces) {
         t->render(projection, view);
-    }
-    
-
+    }*/
+    ball.render(projection,view);
 }
 
 void glutDisplay ()
@@ -423,7 +470,6 @@ void glutMotion(int x, int y) {
         cameraDirection = glm::normalize(eyePoint - centerPoint);
         cameraHorizontal = glm::normalize(glm::cross(up, cameraDirection));
         cameraUp = glm::normalize(glm::cross(cameraHorizontal, cameraDirection));
-        std::cout << cameraUp.y << std::endl;
         if (cameraUp.y < -0.1f) {
             centerPoint += cameraUp * mouseSpeed * yMotionPercent;
             }
@@ -432,7 +478,6 @@ void glutMotion(int x, int y) {
         cameraDirection = glm::normalize(eyePoint - centerPoint);
         cameraHorizontal = glm::normalize(glm::cross(up, cameraDirection));
         cameraUp = glm::normalize(glm::cross(cameraHorizontal, cameraDirection));
-        std::cout << cameraUp.y << std::endl;
         if (cameraUp.y < -0.1f) {
             centerPoint += cameraUp * -mouseSpeed * yMotionPercent;
         }
