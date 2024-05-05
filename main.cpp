@@ -291,10 +291,6 @@ void rotateAroundGlobalCS(float angle, glm::vec3 axis) {
 
 void resetRotation() {
     initLocalCS();
-    for (Triangle* t : faces) {
-        delete t;
-    }
-    faces.clear();
     approximateSphere();
 }
 /*
@@ -383,12 +379,16 @@ void glutKeyboard(unsigned char keycode, int x, int y)
         return;
 
     case '+':
-        n++;
-        approximateSphere();
+        if (n < 4) {
+            n++;
+            approximateSphere();
+        }
         break;
     case '-':
-        n--;
-        approximateSphere();
+        if (n > 0) {
+            n--;
+            approximateSphere();
+        }
         break;
     case 'x':
         rotateAroundGlobalCS(glm::radians(1.0f), { 1.0f, 0.0f, 0.0f }); //Feste globale Achse
