@@ -379,7 +379,7 @@ void glutKeyboard(unsigned char keycode, int x, int y)
         return;
 
     case '+':
-        if (n < 4) {
+        if (n < 8) {
             n++;
             approximateSphere();
         }
