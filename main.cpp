@@ -82,10 +82,11 @@ void subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3
 }
 
 void approximateSphere() {
-    std::vector<glm::vec3> vectors;
+    //Sphere
+    /*std::vector<glm::vec3> vectors;
     std::vector<glm::vec3> color;
     std::vector<GLushort> indices;
-
+    */
 
     for (Triangle* t : faces) {
         delete t;
@@ -101,21 +102,23 @@ void approximateSphere() {
     subdivideTriangle({ 0.0f, 0.0f, -1.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, n);
     subdivideTriangle({ 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, n);
 
+
     //iteriert durch die abgespeicherten dreiecke durch und fixt die Position der Punkte durch anpassung der Entfernung zum mittelpunkt
     for (int i = 0; i < faces.size(); i++) {
         glm::vec3 points[3];
         glBindBuffer(GL_ARRAY_BUFFER, faces[i]->positionBuffer);
         glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
 
+        
         //normalisiert den Vector zu der länge 1 und multiplieziertdann wieder mit den gewünschten Radius
         glm::vec3 p1 = glm::normalize(points[0]) * sphereRadius;
         glm::vec3 p2 = glm::normalize(points[1]) * sphereRadius;
         glm::vec3 p3 = glm::normalize(points[2]) * sphereRadius;
-
         //Speichert die neuen Positionen ab
         faces[i]->setPositions({ p1, p2, p3 });
 
-        vectors.push_back(p1);
+        //Sphere
+        /*vectors.push_back(p1);
         vectors.push_back(p2);
         vectors.push_back(p3);
         color.push_back({ 0.0f,255.0f,255.0f });
@@ -123,9 +126,10 @@ void approximateSphere() {
         color.push_back({ 0.0f,255.0f,255.0f });
         indices.push_back(3.0f * i);
         indices.push_back(3.0f * i+1.0f);
-        indices.push_back(3.0f * i+2.0f);
+        indices.push_back(3.0f * i+2.0f);*/
     }
-    ball.init(vectors, color, indices);
+    //ball.init(vectors, color, indices);
+    //normalisiert den Vector zu der länge 1 und multiplieziertdann wieder mit den gewünschten Radius
 }
 
 //Erstellt das lokale Koordinatensystem
@@ -221,15 +225,15 @@ void rotateAroundLocalCS(float angle, glm::vec3 axis) {
     rotationMatrix[2][2] = cosTheta + (1 - cosTheta) * axis.z * axis.z;
 
     //Triangles
-    /*for (Triangle* t : faces) {
+    for (Triangle* t : faces) {
         glm::vec3 points[3];
         glBindBuffer(GL_ARRAY_BUFFER, t->positionBuffer);
         glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
 
         t->setPositions({ rotationMatrix * points[0], rotationMatrix * points[1], rotationMatrix * points[2] });
-    }*/
+    }
     //Sphere
-    for (int i = 0; i < ball.indicesCount; i += 3) {
+    /*for (int i = 0; i < ball.indicesCount; i += 3) {
         glm::vec3 points[3];
         glBindBuffer(GL_ARRAY_BUFFER, ball.positionBuffer);
         glGetBufferSubData(GL_ARRAY_BUFFER, i * sizeof(glm::vec3), sizeof(points), points);
@@ -240,6 +244,7 @@ void rotateAroundLocalCS(float angle, glm::vec3 axis) {
     }
 
     ball.setPositions(vectors);
+    */
 }
 
 //Rotiert die Kugel um das globale Koordinatensystem
@@ -251,16 +256,16 @@ void rotateAroundGlobalCS(float angle, glm::vec3 axis) {
     glm::mat3 rotationMatrix = getRotMatrix(angle, axis);
 
     //Triangles
-    /*for (Triangle* t : faces) {
+    for (Triangle* t : faces) {
         glm::vec3 points[3];
         glBindBuffer(GL_ARRAY_BUFFER, t->positionBuffer);
         glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
 
         t->setPositions({ rotationMatrix * points[0], rotationMatrix * points[1], rotationMatrix * points[2] });
-    }*/
+    }
 
     //Sphere
-    for (int i = 0; i < ball.indicesCount; i += 3) {
+    /*for (int i = 0; i < ball.indicesCount; i += 3) {
         glm::vec3 points[3];
         glBindBuffer(GL_ARRAY_BUFFER, ball.positionBuffer);
         glGetBufferSubData(GL_ARRAY_BUFFER, i*sizeof(glm::vec3), sizeof(points), points);
@@ -271,6 +276,7 @@ void rotateAroundGlobalCS(float angle, glm::vec3 axis) {
     }
 
     ball.setPositions(vectors);
+    */
 
     glm::vec3 xAxisPoints[2];
     glBindBuffer(GL_ARRAY_BUFFER, x_AxisLocal.positionBuffer);
@@ -336,10 +342,10 @@ void render()
 
     cs_switch == 0 ? drawGlobalCS() : drawLocalCS();
     
-    /*for (Triangle* t : faces) {
+    for (Triangle* t : faces) {
         t->render(projection, view);
-    }*/
-    ball.render(projection,view);
+    }
+    //ball.render(projection,view);
 }
 
 void glutDisplay ()
@@ -379,25 +385,34 @@ void glutKeyboard(unsigned char keycode, int x, int y)
         return;
 
     case '+':
-        if (n < 8) {
+        if (n < 4) {
             n++;
-            approximateSphere();
+            resetRotation();
         }
         break;
     case '-':
         if (n > 0) {
             n--;
-            approximateSphere();
+            resetRotation();
         }
         break;
     case 'x':
-        rotateAroundGlobalCS(glm::radians(1.0f), { 1.0f, 0.0f, 0.0f }); //Feste globale Achse
+        //rotateAroundGlobalCS(glm::radians(1.0f), { 1.0f, 0.0f, 0.0f }); //Feste globale Achse
+        for (Triangle* t : faces) {
+            t->rotate(1.0f, {1.0f,0.0f,0.0f});
+        }
         break;
     case 'y':
-        rotateAroundGlobalCS(glm::radians(1.0f), { 0.0f, 1.0f, 0.0f }); //Feste globale Achse
+        //rotateAroundGlobalCS(glm::radians(1.0f), { 0.0f, 1.0f, 0.0f }); //Feste globale Achse
+        for (Triangle* t : faces) {
+            t->rotate(1.0f, { 0.0f,1.0f,0.0f });
+        }
         break;
     case 'z':
-        rotateAroundGlobalCS(glm::radians(1.0f), { 0.0f, 0.0f, 1.0f }); //Feste globale Achse
+        //rotateAroundGlobalCS(glm::radians(1.0f), { 0.0f, 0.0f, 1.0f }); //Feste globale Achse
+        for (Triangle* t : faces) {
+            t->rotate(1.0f, { 0.0f,0.0f,1.0f });
+        }
         break;
     case 'X':
         glBindBuffer(GL_ARRAY_BUFFER, x_AxisLocal.positionBuffer);
@@ -414,35 +429,46 @@ void glutKeyboard(unsigned char keycode, int x, int y)
         glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(zAxisPoints), zAxisPoints);
         rotateAroundLocalCS(glm::radians(1.0f), zAxisPoints[1]); //variierende lokale Achse
         break;
-    case 'w':
+    case 'a':
         eyePoint -= (eyePoint - centerPoint) * 0.1f;
         centerPoint = eyePoint - glm::normalize(eyePoint - centerPoint);
         break;
-    case 'a':
+    /*case 'w':
         cameraDirection = glm::normalize(eyePoint - centerPoint);
         cameraHorizontal = glm::normalize(glm::cross(up, cameraDirection)) * -0.03f;
         centerPoint += cameraHorizontal;
         eyePoint += cameraHorizontal;
         centerPoint = eyePoint - glm::normalize(eyePoint - centerPoint);
-        break;
+        break;*/
     case 's':
         eyePoint += (eyePoint - centerPoint) * 0.1f;
         centerPoint = eyePoint - glm::normalize(eyePoint - centerPoint);
         break;
-    case 'd':
+    /*case 'd':
         cameraDirection = glm::normalize(eyePoint - centerPoint);
         cameraHorizontal = glm::normalize(glm::cross(up, cameraDirection)) * 0.03f;
         centerPoint += cameraHorizontal;
         eyePoint += cameraHorizontal;
         centerPoint = eyePoint - glm::normalize(eyePoint - centerPoint);
-        break;
+        break;*/
     case 'k':
         cs_switch = !cs_switch;
         break;
     case 'n':
         resetRotation();
         break;
+    case 'r':
+        sphereRadius -= sphereRadius > 0.5f ? 0.1f : 0.0f;
+        resetRotation();
+        break;
+    case 'R':
+        sphereRadius += sphereRadius < 2.5f ? 0.1f : 0.0f;
+        resetRotation();
+        break;
     }
+    
+
+       
     view = glm::lookAt(eyePoint, centerPoint, up);
     glutPostRedisplay();
 }
