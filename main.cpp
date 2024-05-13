@@ -44,7 +44,6 @@ glm::vec3 globalAngle(0.0f, 0.0f, 0.0f);
 float mouseSpeed = 0.01f;
 float scale = 1.0f;
 
-std::vector<Triangle*> faces;
 Sphere ball(program);
 
 unsigned int n = 4; // Anzahl der Unterteilungsstufen [NICHT ZU HOCH MACHEN SONST STIRBT DEIN PC!]
@@ -54,82 +53,7 @@ Line x_AxisLocal(program), y_AxisLocal(program), z_AxisLocal(program); // lokale
 Line x_AxisGlobal(program), y_AxisGlobal(program), z_AxisGlobal(program);// globale x-, y- und z-Achse
 bool cs_switch = GL_FALSE; // Bestimmt welches Koordinatensystem angezeigt wird
 
-void subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, int depth) {
-    //Sobald die Erforderte tiefe erreicht wurde werden die bis hierhin errechneten Punkte in Tatsächliche dreiecks Objekte eingeschrieben,
-    // und dann im globalen vector "faces" abgespeichert
-    if (depth <= 0) {
-        std::vector<glm::vec3> vertices = { v1, v2, v3 };
-        Triangle* t = new Triangle(program);
-        t->init();
-        t->setPositions(vertices);
-        faces.push_back(t);
-    }
-    else { // Teilt ein Dreieck in 3 Dreiecke der vorherigen Tiefe auf.Dies geschieht dadurch, dass eine Ecke des originalen Dreiecks (P1),
-        // mit zwei errechneten Punkten die auf den Vektoren von P1 zu P2 und P1 zu P3 liegen. Danach werden diese errechneten Dreiecke rekursiv wieder aufgeteilt.
-        // hierbei ist zu beachten, dass die neu errechneten Punkte der Dreiecke noch nicht die passende Entfernung zum Mittelpunkt haben. Diese wird später ausgerechnet
-        float scale = depth / (depth + 1.0f);
-        glm::vec3 L_LEFT = v1;
-        glm::vec3 L_RIGHT = v1 + scale * (v2 - v1);
-        glm::vec3 L_UP = v1 + scale * (v3 - v1);
-        subdivideTriangle(L_LEFT, L_RIGHT, L_UP, depth - 1);
 
-        glm::vec3 R_LEFT = v2 + scale * (v1 - v2);
-        glm::vec3 R_RIGHT = v2;
-        glm::vec3 R_UP = v2 + scale * (v3 - v2);
-        subdivideTriangle(R_LEFT, R_RIGHT, R_UP, depth - 1);
-
-        glm::vec3 M_LEFT = v3 + scale * (v1 - v3);
-        glm::vec3 M_RIGHT = v3 + scale * (v2 - v3);
-        glm::vec3 M_UP = v3;
-        subdivideTriangle(M_LEFT, M_RIGHT, M_UP, depth - 1);
-    }
-}
-
-void approximateSphere() {
-    std::vector<glm::vec3> vectors;
-    std::vector<glm::vec3> color;
-    std::vector<GLushort> indices;
-
-
-    for (Triangle* t : faces) {
-        delete t;
-    }
-    faces.clear();
-    //Starte werte für Sphere mit 8 Seiten
-    subdivideTriangle({ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, -1.0f, 0.0f }, n);
-    subdivideTriangle({ 0.0f, 0.0f, 1.0f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, -1.0f, 0.0f }, n);
-    subdivideTriangle({ 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, -1.0f, 0.0f }, n);
-    subdivideTriangle({ -1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, -1.0f, 0.0f }, n);
-    subdivideTriangle({ 0.0f, 0.0f, 1.0f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, n);
-    subdivideTriangle({ -1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, 1.0f, 0.0f }, n);
-    subdivideTriangle({ 0.0f, 0.0f, -1.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, n);
-    subdivideTriangle({ 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, n);
-
-    //iteriert durch die abgespeicherten dreiecke durch und fixt die Position der Punkte durch anpassung der Entfernung zum mittelpunkt
-    for (int i = 0; i < faces.size(); i++) {
-        glm::vec3 points[3];
-        glBindBuffer(GL_ARRAY_BUFFER, faces[i]->positionBuffer);
-        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
-
-        //normalisiert den Vector zu der länge 1 und multiplieziertdann wieder mit den gewünschten Radius
-        glm::vec3 p1 = glm::normalize(points[0]) * sphereRadius;
-        glm::vec3 p2 = glm::normalize(points[1]) * sphereRadius;
-        glm::vec3 p3 = glm::normalize(points[2]) * sphereRadius;
-
-        //Speichert die neuen Positionen ab
-
-        vectors.push_back(p1);
-        vectors.push_back(p2);
-        vectors.push_back(p3);
-        color.push_back({ 255.0f,255.0f,0.0f });
-        color.push_back({ 255.0f,255.0f,0.0f });
-        color.push_back({ 255.0f,255.0f,0.0f });
-        indices.push_back(3.0f * i);
-        indices.push_back(3.0f * i + 1.0f);
-        indices.push_back(3.0f * i + 2.0f);
-    }
-    ball.init(vectors, color, indices);
-}
 
 //Erstellt das lokale Koordinatensystem
 void initLocalCS() {
@@ -205,19 +129,9 @@ void rotateAroundGlobalCS(float angle, glm::vec3 axis) {
 
 }
 
-void scaleSphere(float amount) {
-    glBindBuffer(GL_ARRAY_BUFFER, ball.positionBuffer);
-    if (sphereRadius + amount < glm::distance(centerPoint, glm::vec3(0.0f, 0.0f, 0.0f)) && sphereRadius + amount>0.5) {
-        float percentile = 1.0f + (amount / sphereRadius);
-        sphereRadius += amount;
-        glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(percentile, percentile, percentile));
-        ball.model = scale * ball.model;
-    }
-}
-
 void resetRotation() {
     initLocalCS();
-    approximateSphere();
+    ball.approximateSphere(n, sphereRadius);
 }
 /*
  Initialization. Should return true if everything is ok and false if something went wrong.
@@ -248,7 +162,7 @@ bool init()
     }
     initLocalCS();
     initGlobalCS();
-    approximateSphere();
+    ball.approximateSphere(n, sphereRadius);
 
     return true;
 }
@@ -262,9 +176,6 @@ void render()
 
     cs_switch == 0 ? drawGlobalCS() : drawLocalCS();
 
-    /*for (Triangle* t : faces) {
-        t->render(projection, view);
-    }*/
     ball.render(projection, view);
 }
 
@@ -305,22 +216,22 @@ void glutKeyboard(unsigned char keycode, int x, int y)
         return;
 
     case '+':
-        if (n < 8) {
+        if (n < 6) {
             n++;
-            approximateSphere();
+            ball.approximateSphere(n,sphereRadius);
         }
         break;
     case '-':
         if (n > 0) {
             n--;
-            approximateSphere();
+            ball.approximateSphere(n, sphereRadius);
         }
         break;
     case 'r':
-        scaleSphere(-0.5f);
+        ball.scaleSphere(-0.5f,centerPoint);
         break;
     case 'R':
-        scaleSphere(0.5f);
+        ball.scaleSphere(0.5f,centerPoint);
         break;
     case 'x':
         rotateAroundGlobalCS(glm::radians(1.0f), { 1.0f, 0.0f, 0.0f }); //Feste globale Achse
