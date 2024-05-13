@@ -22,7 +22,7 @@
 #include "Sphere.h"
 
 // Standard window width
-const int WINDOW_WIDTH  = 640;
+const int WINDOW_WIDTH = 640;
 // Standard window height
 const int WINDOW_HEIGHT = 640;
 // GLUT window id/handle
@@ -34,7 +34,7 @@ glm::mat4x4 view;
 glm::mat4x4 projection;
 
 float zNear = 0.1f;
-float zFar  = 100.0f;
+float zFar = 100.0f;
 
 glm::vec3 eyePoint(0.0f, 1.0f, 5.0f);
 glm::vec3 centerPoint = eyePoint - glm::normalize(eyePoint);
@@ -65,8 +65,8 @@ void subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3
         faces.push_back(t);
     }
     else { // Teilt ein Dreieck in 3 Dreiecke der vorherigen Tiefe auf.Dies geschieht dadurch, dass eine Ecke des originalen Dreiecks (P1),
-           // mit zwei errechneten Punkten die auf den Vektoren von P1 zu P2 und P1 zu P3 liegen. Danach werden diese errechneten Dreiecke rekursiv wieder aufgeteilt.
-           // hierbei ist zu beachten, dass die neu errechneten Punkte der Dreiecke noch nicht die passende Entfernung zum Mittelpunkt haben. Diese wird später ausgerechnet
+        // mit zwei errechneten Punkten die auf den Vektoren von P1 zu P2 und P1 zu P3 liegen. Danach werden diese errechneten Dreiecke rekursiv wieder aufgeteilt.
+        // hierbei ist zu beachten, dass die neu errechneten Punkte der Dreiecke noch nicht die passende Entfernung zum Mittelpunkt haben. Diese wird später ausgerechnet
         float scale = depth / (depth + 1.0f);
         glm::vec3 L_LEFT = v1;
         glm::vec3 L_RIGHT = v1 + scale * (v2 - v1);
@@ -125,8 +125,8 @@ void approximateSphere() {
         color.push_back({ 255.0f,255.0f,0.0f });
         color.push_back({ 255.0f,255.0f,0.0f });
         indices.push_back(3.0f * i);
-        indices.push_back(3.0f * i+1.0f);
-        indices.push_back(3.0f * i+2.0f);
+        indices.push_back(3.0f * i + 1.0f);
+        indices.push_back(3.0f * i + 2.0f);
     }
     ball.init(vectors, color, indices);
 }
@@ -197,17 +197,17 @@ void rotateAroundLocalCS(float angle, glm::vec3 axis) {
 //Rotiert die Kugel um das globale Koordinatensystem
 //Rotiert dabei die lokalen Koordinatenachsen mit
 void rotateAroundGlobalCS(float angle, glm::vec3 axis) {
-     glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), angle, axis);
-     x_AxisLocal.model = rotation * x_AxisLocal.model;
-     y_AxisLocal.model = rotation * y_AxisLocal.model;
-     z_AxisLocal.model = rotation * z_AxisLocal.model;
-     ball.model = rotation*ball.model;
+    glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), angle, axis);
+    x_AxisLocal.model = rotation * x_AxisLocal.model;
+    y_AxisLocal.model = rotation * y_AxisLocal.model;
+    z_AxisLocal.model = rotation * z_AxisLocal.model;
+    ball.model = rotation * ball.model;
 
 }
 
 void scaleSphere(float amount) {
     glBindBuffer(GL_ARRAY_BUFFER, ball.positionBuffer);
-    if (sphereRadius + amount < glm::distance(centerPoint,glm::vec3(0.0f, 0.0f, 0.0f) )&& sphereRadius + amount>0.5){
+    if (sphereRadius + amount < glm::distance(centerPoint, glm::vec3(0.0f, 0.0f, 0.0f)) && sphereRadius + amount>0.5) {
         float percentile = 1.0f + (amount / sphereRadius);
         sphereRadius += amount;
         glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(percentile, percentile, percentile));
@@ -249,7 +249,7 @@ bool init()
     initLocalCS();
     initGlobalCS();
     approximateSphere();
-    
+
     return true;
 }
 /*
@@ -261,14 +261,14 @@ void render()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     cs_switch == 0 ? drawGlobalCS() : drawLocalCS();
-    
+
     /*for (Triangle* t : faces) {
         t->render(projection, view);
     }*/
-    ball.render(projection,view);
+    ball.render(projection, view);
 }
 
-void glutDisplay ()
+void glutDisplay()
 {
     render();
     glutSwapBuffers();
@@ -277,14 +277,14 @@ void glutDisplay ()
 /*
  Resize callback.
  */
-void glutResize (int width, int height)
+void glutResize(int width, int height)
 {
     // Division by zero is bad...
     height = height < 1 ? 1 : height;
     glViewport(0, 0, width, height);
-  
+
     // Construct projection matrix.
-    projection = glm::perspective(45.0f, (float) width / height, zNear, zFar);
+    projection = glm::perspective(45.0f, (float)width / height, zNear, zFar);
 }
 
 /*
@@ -398,7 +398,7 @@ void glutMotion(int x, int y) {
         cameraUp = glm::normalize(glm::cross(cameraHorizontal, cameraDirection));
         if (cameraUp.y < -0.1f) {
             centerPoint += cameraUp * mouseSpeed * yMotionPercent;
-            }
+        }
     }
     else if (y < h) {
         cameraDirection = glm::normalize(eyePoint - centerPoint);
@@ -424,18 +424,18 @@ void glutMouse(int button, int status, int x, int y) {
 int main(int argc, char** argv)
 {
     // GLUT: Initialize freeglut library (window toolkit).
-    glutInitWindowSize    (WINDOW_WIDTH, WINDOW_HEIGHT);
-    glutInitWindowPosition(40,40);
+    glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+    glutInitWindowPosition(40, 40);
     glutInit(&argc, argv);
-  
+
     // GLUT: Create a window and opengl context (version 4.3 core profile).
     glutInitContextVersion(4, 3);
-    glutInitContextFlags  (GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
-    glutInitDisplayMode   (GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE);
-  
+    glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
+    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE);
+
     glutCreateWindow("Aufgabenblatt 01");
     glutID = glutGetWindow();
-  
+
     // GLEW: Load opengl extensions
     //glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) {
@@ -447,12 +447,13 @@ int main(int argc, char** argv)
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
         glDebugMessageCallback(cg::glErrorVerboseCallback, nullptr);
         glDebugMessageControl(GL_DONT_CARE,
-			    GL_DONT_CARE,
-			    GL_DONT_CARE,
-			    0,
-			    nullptr,
-			    true); // get all debug messages
-    } else {
+            GL_DONT_CARE,
+            GL_DONT_CARE,
+            0,
+            nullptr,
+            true); // get all debug messages
+    }
+    else {
         std::cout << "glDebugMessageCallback not available" << std::endl;
     }
 #endif
@@ -460,25 +461,25 @@ int main(int argc, char** argv)
     // GLUT: Set callbacks for events.
     glutReshapeFunc(glutResize);
     glutDisplayFunc(glutDisplay);
-    glutIdleFunc   (glutDisplay); // redisplay when idle
-  
+    glutIdleFunc(glutDisplay); // redisplay when idle
+
     glutMotionFunc(glutMotion);
     glutMouseFunc(glutMouse);
-    glutKeyboardFunc(glutKeyboard); 
-  
+    glutKeyboardFunc(glutKeyboard);
+
     // init vertex-array-objects.
     bool result = init();
     if (!result) {
         return -2;
     }
-        
+
     // GLUT: Loop until the user closes the window
     // rendering & event handling
-    glutMainLoop ();
-  
+    glutMainLoop();
+
     // Cleanup in destructors:
     // Objects will be released in ~Object
     // Shader program will be released in ~GLSLProgram
-  
+
     return 0;
 }
