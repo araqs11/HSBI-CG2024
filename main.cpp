@@ -39,10 +39,14 @@ float zFar  = 100.0f;
 glm::vec3 eyePoint(0.0f, 1.0f, 5.0f);
 glm::vec3 centerPoint = eyePoint - glm::normalize(eyePoint);
 glm::vec3 up(0.0f, 1.0f, 0.0f);
+glm::vec3 globalAngle(0.0f, 0.0f, 0.0f);
+
 float mouseSpeed = 0.01f;
+float scale = 1.0f;
 
 std::vector<Triangle*> faces;
 Sphere ball(program);
+
 unsigned int n = 4; // Anzahl der Unterteilungsstufen [NICHT ZU HOCH MACHEN SONST STIRBT DEIN PC!]
 float sphereRadius = 1.0f;  // Skaliert die größe der Kugel
 
@@ -113,14 +117,13 @@ void approximateSphere() {
         glm::vec3 p3 = glm::normalize(points[2]) * sphereRadius;
 
         //Speichert die neuen Positionen ab
-        faces[i]->setPositions({ p1, p2, p3 });
 
         vectors.push_back(p1);
         vectors.push_back(p2);
         vectors.push_back(p3);
-        color.push_back({ 0.0f,255.0f,255.0f });
-        color.push_back({ 0.0f,255.0f,255.0f });
-        color.push_back({ 0.0f,255.0f,255.0f });
+        color.push_back({ 255.0f,255.0f,0.0f });
+        color.push_back({ 255.0f,255.0f,0.0f });
+        color.push_back({ 255.0f,255.0f,0.0f });
         indices.push_back(3.0f * i);
         indices.push_back(3.0f * i+1.0f);
         indices.push_back(3.0f * i+2.0f);
@@ -176,117 +179,40 @@ void drawGlobalCS() {
 
 }
 
-//Rotationsmatrizen für Rotation um x/y/z - Achse
-glm::mat3 getRotMatrix(float angle, glm::vec3 axis) {
-    if (axis.x > 0.0f) {
-        return {
-            1, 0, 0,
-            0, cos(angle), -sin(angle),
-            0, sin(angle), cos(angle) };
-    }
-    if (axis.y > 0.0f) {
-        return {cos(angle), 0, sin(angle),
-            0, 1, 0,
-            -sin(angle), 0, cos(angle)};
-    }
-    if (axis.z > 0.0f) {
-        return { cos(angle), -sin(angle), 0,
-        sin(angle), cos(angle), 0,
-        0, 0, 1 };
-    }
-    return glm::mat3(1.0f);
-}
 
 //Rotiert die Kugel um das lokale Koordinatensystem
 //Richtet sich nach den lokalen Achsen, welche durch globale Rotation geändert werden
 void rotateAroundLocalCS(float angle, glm::vec3 axis) {
+    ball.model = glm::rotate(ball.model, angle, axis);
+    /*x_AxisLocal.model = glm::rotate(x_AxisLocal.model, angle, axis);
+    y_AxisLocal.model = glm::rotate(x_AxisLocal.model, angle, axis);
+    z_AxisLocal.model = glm::rotate(x_AxisLocal.model, angle, axis);*/
 
-    std::vector<glm::vec3> vectors;
-
-    axis = glm::normalize(axis);
-
-    glm::mat3 rotationMatrix = glm::mat3(1.0f);
-
-    float cosTheta = cos(angle);
-    float sinTheta = sin(angle);
-
-    rotationMatrix[0][0] = cosTheta + (1 - cosTheta) * axis.x * axis.x;
-    rotationMatrix[0][1] = (1 - cosTheta) * axis.x * axis.y - sinTheta * axis.z;
-    rotationMatrix[0][2] = (1 - cosTheta) * axis.x * axis.z + sinTheta * axis.y;
-    rotationMatrix[1][0] = (1 - cosTheta) * axis.y * axis.x + sinTheta * axis.z;
-    rotationMatrix[1][1] = cosTheta + (1 - cosTheta) * axis.y * axis.y;
-    rotationMatrix[1][2] = (1 - cosTheta) * axis.y * axis.z - sinTheta * axis.x;
-    rotationMatrix[2][0] = (1 - cosTheta) * axis.z * axis.x - sinTheta * axis.y;
-    rotationMatrix[2][1] = (1 - cosTheta) * axis.z * axis.y + sinTheta * axis.x;
-    rotationMatrix[2][2] = cosTheta + (1 - cosTheta) * axis.z * axis.z;
-
-    //Triangles
-    /*for (Triangle* t : faces) {
-        glm::vec3 points[3];
-        glBindBuffer(GL_ARRAY_BUFFER, t->positionBuffer);
-        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
-
-        t->setPositions({ rotationMatrix * points[0], rotationMatrix * points[1], rotationMatrix * points[2] });
-    }*/
-    //Sphere
-    for (int i = 0; i < ball.indicesCount; i += 3) {
-        glm::vec3 points[3];
-        glBindBuffer(GL_ARRAY_BUFFER, ball.positionBuffer);
-        glGetBufferSubData(GL_ARRAY_BUFFER, i * sizeof(glm::vec3), sizeof(points), points);
-
-        vectors.push_back(rotationMatrix * points[0]);
-        vectors.push_back(rotationMatrix * points[1]);
-        vectors.push_back(rotationMatrix * points[2]);
-    }
-
-    ball.setPositions(vectors);
+    glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), angle, axis);
+    x_AxisLocal.model *= rotation;
+    y_AxisLocal.model *= rotation;
+    z_AxisLocal.model *= rotation;
 }
 
 //Rotiert die Kugel um das globale Koordinatensystem
 //Rotiert dabei die lokalen Koordinatenachsen mit
 void rotateAroundGlobalCS(float angle, glm::vec3 axis) {
+     glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), angle, axis);
+     x_AxisLocal.model = rotation * x_AxisLocal.model;
+     y_AxisLocal.model = rotation * y_AxisLocal.model;
+     z_AxisLocal.model = rotation * z_AxisLocal.model;
+     ball.model = rotation*ball.model;
 
-    std::vector<glm::vec3> vectors;
-    
-    glm::mat3 rotationMatrix = getRotMatrix(angle, axis);
+}
 
-    //Triangles
-    /*for (Triangle* t : faces) {
-        glm::vec3 points[3];
-        glBindBuffer(GL_ARRAY_BUFFER, t->positionBuffer);
-        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
-
-        t->setPositions({ rotationMatrix * points[0], rotationMatrix * points[1], rotationMatrix * points[2] });
-    }*/
-
-    //Sphere
-    for (int i = 0; i < ball.indicesCount; i += 3) {
-        glm::vec3 points[3];
-        glBindBuffer(GL_ARRAY_BUFFER, ball.positionBuffer);
-        glGetBufferSubData(GL_ARRAY_BUFFER, i*sizeof(glm::vec3), sizeof(points), points);
-
-        vectors.push_back(rotationMatrix * points[0]);
-        vectors.push_back(rotationMatrix * points[1]);
-        vectors.push_back(rotationMatrix * points[2]);
+void scaleSphere(float amount) {
+    glBindBuffer(GL_ARRAY_BUFFER, ball.positionBuffer);
+    if (sphereRadius + amount < glm::distance(centerPoint,glm::vec3(0.0f, 0.0f, 0.0f) )&& sphereRadius + amount>0.5){
+        float percentile = 1.0f + (amount / sphereRadius);
+        sphereRadius += amount;
+        glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(percentile, percentile, percentile));
+        ball.model = scale * ball.model;
     }
-
-    ball.setPositions(vectors);
-
-    glm::vec3 xAxisPoints[2];
-    glBindBuffer(GL_ARRAY_BUFFER, x_AxisLocal.positionBuffer);
-    glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(xAxisPoints), xAxisPoints);
-
-    glm::vec3 yAxisPoints[2];
-    glBindBuffer(GL_ARRAY_BUFFER, y_AxisLocal.positionBuffer);
-    glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(yAxisPoints), yAxisPoints);
-
-    glm::vec3 zAxisPoints[2];
-    glBindBuffer(GL_ARRAY_BUFFER, z_AxisLocal.positionBuffer);
-    glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(zAxisPoints), zAxisPoints);
-
-    x_AxisLocal.setPositions({ {0.0f,0.0f,0.0f}, rotationMatrix * xAxisPoints[1] });
-    y_AxisLocal.setPositions({ {0.0f,0.0f,0.0f}, rotationMatrix * yAxisPoints[1] });
-    z_AxisLocal.setPositions({ {0.0f,0.0f,0.0f}, rotationMatrix * zAxisPoints[1] });
 }
 
 void resetRotation() {
@@ -390,6 +316,12 @@ void glutKeyboard(unsigned char keycode, int x, int y)
             approximateSphere();
         }
         break;
+    case 'r':
+        scaleSphere(-0.5f);
+        break;
+    case 'R':
+        scaleSphere(0.5f);
+        break;
     case 'x':
         rotateAroundGlobalCS(glm::radians(1.0f), { 1.0f, 0.0f, 0.0f }); //Feste globale Achse
         break;
@@ -400,19 +332,13 @@ void glutKeyboard(unsigned char keycode, int x, int y)
         rotateAroundGlobalCS(glm::radians(1.0f), { 0.0f, 0.0f, 1.0f }); //Feste globale Achse
         break;
     case 'X':
-        glBindBuffer(GL_ARRAY_BUFFER, x_AxisLocal.positionBuffer);
-        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(xAxisPoints), xAxisPoints);
-        rotateAroundLocalCS(glm::radians(1.0f), xAxisPoints[1]); //variierende lokale Achse
+        rotateAroundLocalCS(glm::radians(1.0f), { 1.0f, 0.0f, 0.0f }); //variierende lokale Achse
         break;
     case 'Y':
-        glBindBuffer(GL_ARRAY_BUFFER, y_AxisLocal.positionBuffer);
-        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(yAxisPoints), yAxisPoints);
-        rotateAroundLocalCS(glm::radians(1.0f), yAxisPoints[1]); //variierende lokale Achse
+        rotateAroundLocalCS(glm::radians(1.0f), { 0.0f, 1.0f, 0.0f }); //variierende lokale Achse
         break;
     case 'Z':
-        glBindBuffer(GL_ARRAY_BUFFER, z_AxisLocal.positionBuffer);
-        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(zAxisPoints), zAxisPoints);
-        rotateAroundLocalCS(glm::radians(1.0f), zAxisPoints[1]); //variierende lokale Achse
+        rotateAroundLocalCS(glm::radians(1.0f), { 0.0f, 0.0f, 1.0f }); //variierende lokale Achse
         break;
     case 'w':
         eyePoint -= (eyePoint - centerPoint) * 0.1f;
