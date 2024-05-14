@@ -13,3 +13,4 @@ public:
 	void init();
 	void render(glm::mat4x4 projection, glm::mat4x4 view);
 };
+
