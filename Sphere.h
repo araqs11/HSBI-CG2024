@@ -1,25 +1,40 @@
 #pragma once
-#pragma once
 #include "Object.h"
 #include "Triangle.h"
-#include <vector>
+#include "Line.h"
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform.hpp>
 
 class Sphere : public Object {
 public:
 	Sphere(cg::GLSLProgram& pg);
 	~Sphere();
-	int indicesCount;
-	std::vector<Triangle*> faces;
-	float sphereRadius;
-	void setPositions(std::vector<glm::vec3> positions);
-	void setColors(std::vector<glm::vec3> positions);
-	void setIndices(std::vector<GLushort> indices);
-	void rotate(float angle, glm::vec3 axis);
-	void init(std::vector<glm::vec3> vertices, std::vector<glm::vec3> colors, std::vector<GLushort> indices);
+	void translate(glm::vec3 translation);
+	void setColor(glm::vec3 color);
+	void setPosition(glm::vec3 position);
+	void init(float radius, glm::vec3 color);
 	void render(glm::mat4x4 projection, glm::mat4x4 view);
-	void approximateSphere(int depth, float radius);
-	void subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, int depth);
-	void scaleSphere(float amount, glm::vec3 centerPoint);
+
+	void subdivideTriangle(glm::vec3& v1, glm::vec3& v2, glm::vec3& v3, int depth);
+	void approximateSphere();
+	void rotateAround(float angle, glm::vec3 axis, glm::vec3 center, bool calledBy);
+	void resetRotation();
+
+	void setRadius(float newRadius);
+	void setSubdivisions(unsigned int subdivisions);
+
+	glm::vec3 getSphereCenter();
+	glm::vec3 getRotationAxis();
+	void setRotationAxis(glm::vec3 axis);
+	Sphere* getChild();
+	void setChild(Sphere* ch);
+
+	std::vector<Triangle*> faces;
+	unsigned int n;
+	float sphereRadius;
+	glm::vec3 sphereCenter;
+	glm::vec3 rotationAxis;
+	Line* axis;
+	Sphere* child;
 };
 

@@ -19,6 +19,7 @@ void Triangle::setPositions(std::vector<glm::vec3> positions) {
 	glEnableVertexAttribArray(pos);
 	glVertexAttribPointer(pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glBindVertexArray(0);
+
 }
 
 void Triangle::setColors(std::vector<glm::vec3> colors) {
@@ -40,8 +41,22 @@ void Triangle::setIndices(std::vector<GLushort> indices) {
 	glBindVertexArray(0);
 }
 
-void Triangle::rotate(float angle, glm::vec3 axis) {
-	model = glm::rotate(model, glm::radians(angle), axis);
+void Triangle::rotate(float angle, glm::vec3 axis, bool local, glm::vec3 rotationCenter) {
+	if (local) {
+		model = glm::rotate(model, glm::radians(angle), axis);
+	}
+	else {
+		glm::mat4 translateToOrigin = glm::translate(-rotationCenter);
+		glm::mat4 rotation = glm::rotate(glm::radians(angle), axis);
+		glm::mat4 translateBack = glm::translate(rotationCenter);
+		glm::mat4 rotationMatrix = translateBack * rotation * translateToOrigin;
+
+		model = rotationMatrix * model;
+	}
+}
+
+void Triangle::translate(glm::vec3 translation) {
+	model = glm::translate(model, translation);
 }
 
 void Triangle::init() {
@@ -49,7 +64,7 @@ void Triangle::init() {
 	const std::vector<glm::vec3> vertices = { glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.7320f, 0.0f) };
 	const std::vector<glm::vec3> colors = { glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f) };
 	const std::vector<GLushort>  indices = { 0, 1, 2 };
-	
+
 
 	GLuint programId = program.getHandle();
 	GLuint pos;
@@ -82,6 +97,7 @@ void Triangle::init() {
 	glGenBuffers(1, &indexBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLushort), indices.data(), GL_STATIC_DRAW);
+
 
 	// Unbind vertex array object (back to default).
 	glBindVertexArray(0);

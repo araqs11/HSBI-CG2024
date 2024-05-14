@@ -36,103 +36,16 @@ glm::mat4x4 projection;
 float zNear = 0.1f;
 float zFar = 100.0f;
 
-glm::vec3 eyePoint(0.0f, 1.0f, 5.0f);
+glm::vec3 eyePoint(0.0f, 0.0f, 5.0f);
 glm::vec3 centerPoint = eyePoint - glm::normalize(eyePoint);
 glm::vec3 up(0.0f, 1.0f, 0.0f);
-glm::vec3 globalAngle(0.0f, 0.0f, 0.0f);
-
 float mouseSpeed = 0.01f;
-float scale = 1.0f;
 
-Sphere ball(program);
-
-unsigned int n = 4; // Anzahl der Unterteilungsstufen [NICHT ZU HOCH MACHEN SONST STIRBT DEIN PC!]
-float sphereRadius = 1.0f;  // Skaliert die größe der Kugel
-
-Line x_AxisLocal(program), y_AxisLocal(program), z_AxisLocal(program); // lokale x-, y- und z-Achse
-Line x_AxisGlobal(program), y_AxisGlobal(program), z_AxisGlobal(program);// globale x-, y- und z-Achse
-bool cs_switch = GL_FALSE; // Bestimmt welches Koordinatensystem angezeigt wird
-
-
-
-//Erstellt das lokale Koordinatensystem
-void initLocalCS() {
-    x_AxisLocal.init();
-    x_AxisLocal.setPositions({ {0.0f, 0.0f, 0.0f}, {0.5f, 0.0f, 0.0f} });
-    x_AxisLocal.setColors({ {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f} });
-
-    y_AxisLocal.init();
-    y_AxisLocal.setPositions({ {0.0f, 0.0f, 0.0f}, {0.0f, 0.5f, 0.0f} });
-    y_AxisLocal.setColors({ {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f} });
-
-    z_AxisLocal.init();
-    z_AxisLocal.setPositions({ {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.5f} });
-    z_AxisLocal.setColors({ {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f} });
-}
-
-//Erstellt das globale Koordinatensystem
-void initGlobalCS() {
-    x_AxisGlobal.init();
-    x_AxisGlobal.setPositions({ {0.0f, 0.0f, 0.0f}, {0.5f, 0.0f, 0.0f} });
-    x_AxisGlobal.setColors({ {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f} });
-
-    y_AxisGlobal.init();
-    y_AxisGlobal.setPositions({ {0.0f, 0.0f, 0.0f}, {0.0f, 0.5f, 0.0f} });
-    y_AxisGlobal.setColors({ {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f} });
-
-    z_AxisGlobal.init();
-    z_AxisGlobal.setPositions({ {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.5f} });
-    z_AxisGlobal.setColors({ {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f} });
-}
-
-//Rendert das lokale Koordinatensystem bei (0,0,0)
-void drawLocalCS() {
-
-    x_AxisLocal.render(projection, view);
-    y_AxisLocal.render(projection, view);
-    z_AxisLocal.render(projection, view);
-
-}
-
-//Rendert das globale Koordinatensystem bei (0,0,0)
-void drawGlobalCS() {
-
-    x_AxisGlobal.render(projection, view);
-    y_AxisGlobal.render(projection, view);
-    z_AxisGlobal.render(projection, view);
-
-}
-
-
-//Rotiert die Kugel um das lokale Koordinatensystem
-//Richtet sich nach den lokalen Achsen, welche durch globale Rotation geändert werden
-void rotateAroundLocalCS(float angle, glm::vec3 axis) {
-    ball.model = glm::rotate(ball.model, angle, axis);
-    /*x_AxisLocal.model = glm::rotate(x_AxisLocal.model, angle, axis);
-    y_AxisLocal.model = glm::rotate(x_AxisLocal.model, angle, axis);
-    z_AxisLocal.model = glm::rotate(x_AxisLocal.model, angle, axis);*/
-
-    glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), angle, axis);
-    x_AxisLocal.model *= rotation;
-    y_AxisLocal.model *= rotation;
-    z_AxisLocal.model *= rotation;
-}
-
-//Rotiert die Kugel um das globale Koordinatensystem
-//Rotiert dabei die lokalen Koordinatenachsen mit
-void rotateAroundGlobalCS(float angle, glm::vec3 axis) {
-    glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), angle, axis);
-    x_AxisLocal.model = rotation * x_AxisLocal.model;
-    y_AxisLocal.model = rotation * y_AxisLocal.model;
-    z_AxisLocal.model = rotation * z_AxisLocal.model;
-    ball.model = rotation * ball.model;
-
-}
-
-void resetRotation() {
-    initLocalCS();
-    ball.approximateSphere(n, sphereRadius);
-}
+Sphere sun(program);
+Sphere planet(program);
+Sphere moon(program);
+Sphere moon_moon(program);
+int count = 0;
 /*
  Initialization. Should return true if everything is ok and false if something went wrong.
  */
@@ -160,9 +73,28 @@ bool init()
         std::cerr << program.log();
         return false;
     }
-    initLocalCS();
-    initGlobalCS();
-    ball.approximateSphere(n, sphereRadius);
+
+    sun.init(0.5, { 1.0f,1.0f,0.0f });
+    sun.setPosition({ 0.0f,0.0f,0.0f });
+
+    planet.init(0.2f, { 0.0f,1.0f,0.0f });
+    planet.setPosition({ 1.5f,0.0f,0.0f });
+    planet.rotateAround(-45.0f, { 0.0f,0.0f,1.0f }, planet.getSphereCenter(), GL_FALSE);
+    planet.setRotationAxis({ 1.0f,1.0f,0.0f });
+
+    moon.init(0.1f, { 0.1f,0.9f,1.0f });
+    moon.setPosition({ 1.9f, 0.0f, 0.0f });
+    moon.rotateAround(-45.0f, { 0.0f,0.0f,1.0f }, planet.getSphereCenter(), GL_FALSE);
+    moon.setRotationAxis({ 1.0f,1.0f,0.0f });
+
+    moon_moon.init(0.05f, { 1.0f,0.0f,0.78f });
+    moon_moon.setPosition({ 2.3f, 0.0f, 0.0f });
+    moon_moon.rotateAround(-45.0f, { 0.0f,0.0f,1.0f }, planet.getSphereCenter(), GL_FALSE);
+    moon_moon.setRotationAxis({ 1.0f,1.0f,0.0f });
+
+    sun.setChild(&planet);
+    planet.setChild(&moon);
+    moon.setChild(&moon_moon);
 
     return true;
 }
@@ -174,9 +106,15 @@ void render()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    cs_switch == 0 ? drawGlobalCS() : drawLocalCS();
+    sun.render(projection, view);
+    planet.render(projection, view);
+    moon.render(projection, view);
+    moon_moon.render(projection, view);
 
-    ball.render(projection, view);
+    sun.rotateAround(0.2f, { 0.0f, 1.0f, 0.0f }, sun.getSphereCenter(), GL_FALSE);
+    planet.rotateAround(0.0f, sun.getRotationAxis(), sun.getSphereCenter(), GL_FALSE);
+    moon.rotateAround(0.3f, planet.getRotationAxis(), planet.getSphereCenter(), GL_FALSE);
+    moon_moon.rotateAround(0.4f, moon.getRotationAxis(), moon.getSphereCenter(), GL_FALSE);
 }
 
 void glutDisplay()
@@ -207,79 +145,22 @@ void glutKeyboard(unsigned char keycode, int x, int y)
     glm::vec3 cameraHorizontal;
     glm::vec3 cameraUp;
 
-    glm::vec3 xAxisPoints[2];
-    glm::vec3 yAxisPoints[2];
-    glm::vec3 zAxisPoints[2];
     switch (keycode) {
     case 27: // ESC
         glutDestroyWindow(glutID);
         return;
-
     case '+':
-        if (n < 6) {
-            n++;
-            ball.approximateSphere(n,sphereRadius);
-        }
-        break;
-    case '-':
-        if (n > 0) {
-            n--;
-            ball.approximateSphere(n, sphereRadius);
-        }
-        break;
-    case 'r':
-        ball.scaleSphere(-0.5f,centerPoint);
-        break;
-    case 'R':
-        ball.scaleSphere(0.5f,centerPoint);
-        break;
-    case 'x':
-        rotateAroundGlobalCS(glm::radians(1.0f), { 1.0f, 0.0f, 0.0f }); //Feste globale Achse
-        break;
-    case 'y':
-        rotateAroundGlobalCS(glm::radians(1.0f), { 0.0f, 1.0f, 0.0f }); //Feste globale Achse
-        break;
-    case 'z':
-        rotateAroundGlobalCS(glm::radians(1.0f), { 0.0f, 0.0f, 1.0f }); //Feste globale Achse
-        break;
-    case 'X':
-        rotateAroundLocalCS(glm::radians(1.0f), { 1.0f, 0.0f, 0.0f }); //variierende lokale Achse
-        break;
-    case 'Y':
-        rotateAroundLocalCS(glm::radians(1.0f), { 0.0f, 1.0f, 0.0f }); //variierende lokale Achse
-        break;
-    case 'Z':
-        rotateAroundLocalCS(glm::radians(1.0f), { 0.0f, 0.0f, 1.0f }); //variierende lokale Achse
-        break;
-    case 'w':
         eyePoint -= (eyePoint - centerPoint) * 0.1f;
         centerPoint = eyePoint - glm::normalize(eyePoint - centerPoint);
         break;
-    case 'a':
-        cameraDirection = glm::normalize(eyePoint - centerPoint);
-        cameraHorizontal = glm::normalize(glm::cross(up, cameraDirection)) * -0.03f;
-        centerPoint += cameraHorizontal;
-        eyePoint += cameraHorizontal;
-        centerPoint = eyePoint - glm::normalize(eyePoint - centerPoint);
-        break;
-    case 's':
+    case '-':
         eyePoint += (eyePoint - centerPoint) * 0.1f;
         centerPoint = eyePoint - glm::normalize(eyePoint - centerPoint);
         break;
-    case 'd':
-        cameraDirection = glm::normalize(eyePoint - centerPoint);
-        cameraHorizontal = glm::normalize(glm::cross(up, cameraDirection)) * 0.03f;
-        centerPoint += cameraHorizontal;
-        eyePoint += cameraHorizontal;
-        centerPoint = eyePoint - glm::normalize(eyePoint - centerPoint);
-        break;
-    case 'k':
-        cs_switch = !cs_switch;
-        break;
-    case 'n':
-        resetRotation();
-        break;
     }
+
+
+
     view = glm::lookAt(eyePoint, centerPoint, up);
     glutPostRedisplay();
 }
@@ -289,7 +170,6 @@ void glutMotion(int x, int y) {
     float h = WINDOW_HEIGHT / 2.0f;
     float xMotionPercent = x - w >= 0 ? 1 / (w / x) : w / x;
     float yMotionPercent = y - h >= 0 ? 1 / (h / y) : h / y;
-
     glm::vec3 cameraDirection;
     glm::vec3 cameraHorizontal;
     glm::vec3 cameraUp;
@@ -331,6 +211,7 @@ void glutMouse(int button, int status, int x, int y) {
         glutSetCursor(GLUT_CURSOR_LEFT_ARROW);
     }
 }
+
 
 int main(int argc, char** argv)
 {
@@ -374,16 +255,16 @@ int main(int argc, char** argv)
     glutDisplayFunc(glutDisplay);
     glutIdleFunc(glutDisplay); // redisplay when idle
 
+    glutKeyboardFunc(glutKeyboard);
+
     glutMotionFunc(glutMotion);
     glutMouseFunc(glutMouse);
-    glutKeyboardFunc(glutKeyboard);
 
     // init vertex-array-objects.
     bool result = init();
     if (!result) {
         return -2;
     }
-
     // GLUT: Loop until the user closes the window
     // rendering & event handling
     glutMainLoop();
