@@ -95,12 +95,10 @@ void Sphere::render(glm::mat4x4 projection, glm::mat4x4 view) {
 	program.use();
 	program.setUniform("mvp", mvp);
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Setzt den Rendermodus auf Linien
 	// Bind vertex array object so we can render the 1 triangle.
 	glBindVertexArray(vao);
 	glDrawElements(GL_TRIANGLES, indicesCount, GL_UNSIGNED_SHORT, 0);
 	glBindVertexArray(0);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Setzt den Rendermodus auf Fill
 }
 
 void Sphere::subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, int depth) {
@@ -131,6 +129,12 @@ void Sphere::subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const g
         glm::vec3 M_RIGHT = v3 + scale * (v2 - v3);
         glm::vec3 M_UP = v3;
         subdivideTriangle(M_LEFT, M_RIGHT, M_UP, depth - 1);
+
+        std::vector<glm::vec3> vertices = { L_RIGHT, L_UP, M_RIGHT };
+        Triangle* t = new Triangle(program);
+        t->init();
+        t->setPositions(vertices);
+        faces.push_back(t);
     }
 }
 

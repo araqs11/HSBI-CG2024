@@ -48,6 +48,7 @@ float scale = 1.0f;
 Sphere sun(program);
 Sphere planet(program);
 Sphere moon(program);
+Sphere moon_moon(program);
 
 unsigned int n = 4; // Anzahl der Unterteilungsstufen [NICHT ZU HOCH MACHEN SONST STIRBT DEIN PC!]
 float sphereRadius = 1.0f;  // Skaliert die größe der Kugel
@@ -165,21 +166,38 @@ bool init()
     initGlobalCS();
 
 
-    std::vector<glm::vec3> color = { {255.0f,255.0f,0.0f},{255.0f,255.0f,0.0f},{255.0f,255.0f,0.0f} };
-    sun.approximateSphere(7, 1.0f,color);
+    std::vector<glm::vec3> color = { {255.0f,153.0f,51.2f},{255.0f,102.0f,0.0f},{255.0f,255.0f,102.0f} };
+    color[0] *= 1.0f / 255.0f;
+    color[1] *= 1.0f / 255.0f;
+    color[2] *= 1.0f / 255.0f;
+    sun.approximateSphere(4, 2.0f,color);
     sun.setPosition({ 0.0f,0.0f,0.0f });
 
-    color = { {0.0f,0.0f,255.0f},{0.0f,100.0f,0.0f},{0.0f,0.0f,255.0f}};
-    planet.approximateSphere(7, 0.5f,color);
+    color = { {0.0f,119.0f,190.0f},{102.0f,204.0f,102.0f},{0.0f,119.0f,190.0f} };
+    color[0] *= 1.0f / 255.0f;
+    color[1] *= 1.0f / 255.0f;
+    color[2] *= 1.0f / 255.0f;
+    planet.approximateSphere(4, 1.0f,color);
     planet.setPosition({ 5.0f,0.0f,0.0f });
     planet.rotationAxis = { 1.0f,1.0f,0.0f };
 
-    color = { {255.0f,255.0f,255.0f},{255.0f,255.0f,255.0f},{255.0f,255.0f,255.0f} };
-    moon.approximateSphere(7, 0.2f,color);
-    moon.setPosition({ 6.0f, 0.0f, 0.0f });
+    color = { {158.0f,158.0f,158.0f},{139.0f,117.0f,93.0f},{192.0f,224.0f,255.0f} };
+    color[0] *= 1.0f / 255.0f;
+    color[1] *= 1.0f / 255.0f;
+    color[2] *= 1.0f / 255.0f;
+    moon.approximateSphere(4, 0.2f,color);
+    moon.setPosition({ 7.0f, 0.0f, 0.0f });
+
+    color = { {158.0f,158.0f,158.0f},{139.0f,117.0f,93.0f},{192.0f,224.0f,255.0f} };
+    color[0] *= 1.0f / 255.0f;
+    color[1] *= 1.0f / 255.0f;
+    color[2] *= 1.0f / 255.0f;
+    moon_moon.approximateSphere(4, 0.1f, color);
+    moon_moon.setPosition({ 7.5f, 0.0f, 0.0f });
 
     sun.setChild(&planet);
     planet.setChild(&moon);
+    moon.setChild(&moon_moon);
 
     return true;
 }
@@ -196,10 +214,12 @@ void render()
     sun.render(projection, view);
     planet.render(projection, view);
     moon.render(projection, view);
+    moon_moon.render(projection, view);
 
     sun.rotateAround(glm::radians(0.5f), {0.0f, 1.0f, 0.0f}, sun.sphereCenter, GL_FALSE);
     planet.rotateAround(glm::radians(0.3f), sun.rotationAxis, sun.sphereCenter, GL_FALSE);
     moon.rotateAround(glm::radians(0.6f), planet.rotationAxis, planet.sphereCenter, GL_FALSE);
+    moon_moon.rotateAround(glm::radians(0.4f), moon.rotationAxis, moon.sphereCenter, GL_FALSE);
 
 }
 
