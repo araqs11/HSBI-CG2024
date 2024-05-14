@@ -2,6 +2,10 @@
 
 Sphere::Sphere(cg::GLSLProgram& pg) : Object(pg), sphereRadius(1.0f), indicesCount(0){
     std::vector<Triangle*> faces;
+    sphereCenter = { 0.0f,0.0f,0.0f };
+    rotationAxis = { 0.0f,1.0f,0.0f };
+    faces.clear();
+    child = 0;
 }
 
 Sphere::~Sphere() {
@@ -130,7 +134,8 @@ void Sphere::subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const g
     }
 }
 
-void Sphere::approximateSphere(int depth,float radius) {
+void Sphere::approximateSphere(int depth,float radius, std::vector<glm::vec3> c) {
+    sphereRadius = radius;
     std::vector<glm::vec3> vectors;
     std::vector<glm::vec3> color;
     std::vector<GLushort> indices;
@@ -165,15 +170,19 @@ void Sphere::approximateSphere(int depth,float radius) {
         vectors.push_back(p1);
         vectors.push_back(p2);
         vectors.push_back(p3);
-        color.push_back({ 255.0f,255.0f,0.0f });
-        color.push_back({ 255.0f,255.0f,0.0f });
-        color.push_back({ 255.0f,255.0f,0.0f });
+        color.push_back(c[0]);
+        color.push_back(c[1]);
+        color.push_back(c[2]);
         indices.push_back(3.0f * i);
         indices.push_back(3.0f * i + 1.0f);
         indices.push_back(3.0f * i + 2.0f);
 
     }
     init(vectors, color, indices);
+    for (Triangle* t : faces) {
+        delete t;
+    }
+    faces.clear();
 }
 
 void Sphere::scaleSphere(float amount, glm::vec3 centerPoint) {
@@ -184,4 +193,42 @@ void Sphere::scaleSphere(float amount, glm::vec3 centerPoint) {
         glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(percentile, percentile, percentile));
         model = scale * model;
     }
+}
+
+void Sphere::rotateAround(float angle, glm::vec3 axis, glm::vec3 center, bool calledByParent) {
+    glm::mat4 translateToOrigin = glm::translate(glm::mat4 (1.0f), -center);
+    glm::mat4 rotation = glm::rotate(glm::mat4(1.0f),glm::radians(angle), axis);
+    glm::mat4 translateBack = glm::translate(glm::mat4(1.0f),center);
+    glm::mat4 rotationMatrix = translateBack * rotation * translateToOrigin;
+
+    model = rotationMatrix * model;
+
+    sphereCenter = rotationMatrix * glm::vec4(sphereCenter, 1.0f);
+
+    if (calledByParent) {
+        rotationAxis = rotationMatrix * glm::vec4(rotationAxis, 1.0f);
+    }
+    if (child != NULL) {
+        child->rotateAround(angle, axis, center, GL_TRUE);
+    }
+}
+void Sphere::translate(glm::vec3 translation) {
+    model = glm::translate(model,translation);
+
+    sphereCenter = glm::translate(glm::mat4(1.0f), translation) * glm::vec4(sphereCenter, 1.0f);
+
+    if (child != NULL) {
+        child->translate(translation);
+    }
+}
+
+void Sphere::setPosition(glm::vec3 position) {
+    translate(position - sphereCenter);
+}
+
+Sphere* Sphere::getChild() {
+    return child;
+}
+void Sphere::setChild(Sphere* ch) {
+    child = ch;
 }

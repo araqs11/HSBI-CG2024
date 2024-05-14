@@ -44,7 +44,10 @@ glm::vec3 globalAngle(0.0f, 0.0f, 0.0f);
 float mouseSpeed = 0.01f;
 float scale = 1.0f;
 
-Sphere ball(program);
+
+Sphere sun(program);
+Sphere planet(program);
+Sphere moon(program);
 
 unsigned int n = 4; // Anzahl der Unterteilungsstufen [NICHT ZU HOCH MACHEN SONST STIRBT DEIN PC!]
 float sphereRadius = 1.0f;  // Skaliert die größe der Kugel
@@ -107,7 +110,6 @@ void drawGlobalCS() {
 //Rotiert die Kugel um das lokale Koordinatensystem
 //Richtet sich nach den lokalen Achsen, welche durch globale Rotation geändert werden
 void rotateAroundLocalCS(float angle, glm::vec3 axis) {
-    ball.model = glm::rotate(ball.model, angle, axis);
     /*x_AxisLocal.model = glm::rotate(x_AxisLocal.model, angle, axis);
     y_AxisLocal.model = glm::rotate(x_AxisLocal.model, angle, axis);
     z_AxisLocal.model = glm::rotate(x_AxisLocal.model, angle, axis);*/
@@ -125,19 +127,19 @@ void rotateAroundGlobalCS(float angle, glm::vec3 axis) {
     x_AxisLocal.model = rotation * x_AxisLocal.model;
     y_AxisLocal.model = rotation * y_AxisLocal.model;
     z_AxisLocal.model = rotation * z_AxisLocal.model;
-    ball.model = rotation * ball.model;
 
 }
 
 void resetRotation() {
     initLocalCS();
-    ball.approximateSphere(n, sphereRadius);
 }
 /*
  Initialization. Should return true if everything is ok and false if something went wrong.
  */
 bool init()
 {
+
+
     // OpenGL: Set "background" color and enable depth testing.
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glEnable(GL_DEPTH_TEST);
@@ -160,9 +162,24 @@ bool init()
         std::cerr << program.log();
         return false;
     }
-    initLocalCS();
     initGlobalCS();
-    ball.approximateSphere(n, sphereRadius);
+
+
+    std::vector<glm::vec3> color = { {255.0f,255.0f,0.0f},{255.0f,255.0f,0.0f},{255.0f,255.0f,0.0f} };
+    sun.approximateSphere(7, 1.0f,color);
+    sun.setPosition({ 0.0f,0.0f,0.0f });
+
+    color = { {0.0f,0.0f,255.0f},{0.0f,100.0f,0.0f},{0.0f,0.0f,255.0f}};
+    planet.approximateSphere(7, 0.5f,color);
+    planet.setPosition({ 5.0f,0.0f,0.0f });
+    planet.rotationAxis = { 1.0f,1.0f,0.0f };
+
+    color = { {255.0f,255.0f,255.0f},{255.0f,255.0f,255.0f},{255.0f,255.0f,255.0f} };
+    moon.approximateSphere(7, 0.2f,color);
+    moon.setPosition({ 6.0f, 0.0f, 0.0f });
+
+    sun.setChild(&planet);
+    planet.setChild(&moon);
 
     return true;
 }
@@ -176,7 +193,14 @@ void render()
 
     cs_switch == 0 ? drawGlobalCS() : drawLocalCS();
 
-    ball.render(projection, view);
+    sun.render(projection, view);
+    planet.render(projection, view);
+    moon.render(projection, view);
+
+    sun.rotateAround(glm::radians(0.5f), {0.0f, 1.0f, 0.0f}, sun.sphereCenter, GL_FALSE);
+    planet.rotateAround(glm::radians(0.3f), sun.rotationAxis, sun.sphereCenter, GL_FALSE);
+    moon.rotateAround(glm::radians(0.6f), planet.rotationAxis, planet.sphereCenter, GL_FALSE);
+
 }
 
 void glutDisplay()
@@ -214,25 +238,6 @@ void glutKeyboard(unsigned char keycode, int x, int y)
     case 27: // ESC
         glutDestroyWindow(glutID);
         return;
-
-    case '+':
-        if (n < 6) {
-            n++;
-            ball.approximateSphere(n,sphereRadius);
-        }
-        break;
-    case '-':
-        if (n > 0) {
-            n--;
-            ball.approximateSphere(n, sphereRadius);
-        }
-        break;
-    case 'r':
-        ball.scaleSphere(-0.5f,centerPoint);
-        break;
-    case 'R':
-        ball.scaleSphere(0.5f,centerPoint);
-        break;
     case 'x':
         rotateAroundGlobalCS(glm::radians(1.0f), { 1.0f, 0.0f, 0.0f }); //Feste globale Achse
         break;
