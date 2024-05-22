@@ -45,7 +45,13 @@ Sphere sun(program);
 Sphere planet(program);
 Sphere moon(program);
 Sphere moon_moon(program);
-int count = 0;
+
+float sunSpeed = 0.0f;
+float planetSpeed = 0.0f;
+float moonSpeed = 0.0f;
+float moon_moonSpeed = 0.0f;
+
+bool shouldRoate = GL_TRUE;
 /*
  Initialization. Should return true if everything is ok and false if something went wrong.
  */
@@ -111,10 +117,12 @@ void render()
     moon.render(projection, view);
     moon_moon.render(projection, view);
 
-    sun.rotateAround(0.0f, { 0.0f, 1.0f, 0.0f }, sun.getSphereCenter());
-    planet.rotateAround(0.2f, sun.getRotationAxis(), sun.getSphereCenter());
-    moon.rotateAround(0.1f, planet.getRotationAxis(), planet.getSphereCenter());
-    moon_moon.rotateAround(0.3f, moon.getRotationAxis(), moon.getSphereCenter());
+    if (shouldRoate) {
+        sun.rotateAround(sunSpeed, { 0.0f, 1.0f, 0.0f }, sun.getSphereCenter());
+        planet.rotateAround(planetSpeed, sun.getRotationAxis(), sun.getSphereCenter());
+        moon.rotateAround(moonSpeed, planet.getRotationAxis(), planet.getSphereCenter());
+        moon_moon.rotateAround(moon_moonSpeed, moon.getRotationAxis(), moon.getSphereCenter());
+    }
 }
 
 void glutDisplay()
@@ -145,6 +153,9 @@ void glutKeyboard(unsigned char keycode, int x, int y)
     glm::vec3 cameraHorizontal;
     glm::vec3 cameraUp;
 
+    float speedChange = 0.02f;
+    float speedLimit = 0.2f;
+
     switch (keycode) {
     case 27: // ESC
         glutDestroyWindow(glutID);
@@ -156,6 +167,21 @@ void glutKeyboard(unsigned char keycode, int x, int y)
     case '-':
         eyePoint += (eyePoint - centerPoint) * 0.1f;
         centerPoint = eyePoint - glm::normalize(eyePoint - centerPoint);
+        break;
+    case 'g':   //Rotation anhalten
+        shouldRoate = !shouldRoate;
+        break;
+    case 'f':   //Schneller
+        sunSpeed = sunSpeed < speedLimit - speedChange ? sunSpeed + speedChange : speedLimit;
+        planetSpeed = planetSpeed < speedLimit - speedChange ? planetSpeed + speedChange : speedLimit;
+        moonSpeed = moonSpeed < speedLimit - speedChange ? moonSpeed + speedChange : speedLimit;
+        moon_moonSpeed = moon_moonSpeed < speedLimit - speedChange ? moon_moonSpeed + speedChange : speedLimit;
+        break;
+    case 'd':   //Langsamer
+        sunSpeed = sunSpeed > speedChange ? sunSpeed - speedChange : 0;
+        planetSpeed = planetSpeed > speedChange ? planetSpeed - speedChange : 0;
+        moonSpeed = moonSpeed > speedChange ? moonSpeed - speedChange : 0;
+        moon_moonSpeed = moon_moonSpeed > speedChange ? moon_moonSpeed - speedChange : 0;
         break;
     }
 
