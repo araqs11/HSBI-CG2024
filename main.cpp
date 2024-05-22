@@ -79,17 +79,17 @@ bool init()
 
     planet.init(0.2f, { 0.0f,1.0f,0.0f });
     planet.setPosition({ 1.5f,0.0f,0.0f });
-    planet.rotateAround(-45.0f, { 0.0f,0.0f,1.0f }, planet.getSphereCenter(), GL_FALSE);
+    planet.rotateAround(-45.0f, { 0.0f,0.0f,1.0f }, planet.getSphereCenter());
     planet.setRotationAxis({ 1.0f,1.0f,0.0f });
 
     moon.init(0.1f, { 0.1f,0.9f,1.0f });
     moon.setPosition({ 1.9f, 0.0f, 0.0f });
-    moon.rotateAround(-45.0f, { 0.0f,0.0f,1.0f }, planet.getSphereCenter(), GL_FALSE);
+    moon.rotateAround(-45.0f, { 0.0f,0.0f,1.0f }, planet.getSphereCenter());
     moon.setRotationAxis({ 1.0f,1.0f,0.0f });
 
     moon_moon.init(0.05f, { 1.0f,0.0f,0.78f });
     moon_moon.setPosition({ 2.3f, 0.0f, 0.0f });
-    moon_moon.rotateAround(-45.0f, { 0.0f,0.0f,1.0f }, planet.getSphereCenter(), GL_FALSE);
+    moon_moon.rotateAround(-45.0f, { 0.0f,0.0f,1.0f }, planet.getSphereCenter());
     moon_moon.setRotationAxis({ 1.0f,1.0f,0.0f });
 
     sun.setChild(&planet);
@@ -111,10 +111,10 @@ void render()
     moon.render(projection, view);
     moon_moon.render(projection, view);
 
-    sun.rotateAround(0.2f, { 0.0f, 1.0f, 0.0f }, sun.getSphereCenter(), GL_FALSE);
-    planet.rotateAround(0.0f, sun.getRotationAxis(), sun.getSphereCenter(), GL_FALSE);
-    moon.rotateAround(0.3f, planet.getRotationAxis(), planet.getSphereCenter(), GL_FALSE);
-    moon_moon.rotateAround(0.4f, moon.getRotationAxis(), moon.getSphereCenter(), GL_FALSE);
+    sun.rotateAround(0.0f, { 0.0f, 1.0f, 0.0f }, sun.getSphereCenter());
+    planet.rotateAround(0.2f, sun.getRotationAxis(), sun.getSphereCenter());
+    moon.rotateAround(0.1f, planet.getRotationAxis(), planet.getSphereCenter());
+    moon_moon.rotateAround(0.3f, moon.getRotationAxis(), moon.getSphereCenter());
 }
 
 void glutDisplay()

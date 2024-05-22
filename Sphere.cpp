@@ -113,7 +113,7 @@ void Sphere::approximateSphere() {
     }
 }
 
-void Sphere::rotateAround(float angle, glm::vec3 axis, glm::vec3 center, bool calledByParent) {
+void Sphere::rotateAround(float angle, glm::vec3 axis, glm::vec3 center) {
 
     for (Triangle* t : faces) {
         t->rotate(angle, axis, GL_FALSE, center);
@@ -124,11 +124,11 @@ void Sphere::rotateAround(float angle, glm::vec3 axis, glm::vec3 center, bool ca
     glm::mat4 rotationMatrix = translateBack * rotation * translateToOrigin;
 
     sphereCenter = rotationMatrix * glm::vec4(sphereCenter, 1.0f);
-    if (calledByParent) {
+    if (rotationAxis != axis) {
         rotationAxis = rotationMatrix * glm::vec4(rotationAxis, 1.0f);
     }
     if (child != NULL) {
-        child->rotateAround(angle, axis, center, GL_TRUE);
+        child->rotateAround(angle, axis, center);
     }
 }
 
