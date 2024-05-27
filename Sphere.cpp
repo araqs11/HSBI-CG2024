@@ -49,6 +49,9 @@ void Sphere::render(glm::mat4x4 projection, glm::mat4x4 view) {
     for (Triangle* t : faces) {
         t->render(projection, view);
     }
+    if(rotationAxis != glm::vec3{0.0f,1.0f,0.0f}) {
+        rotationAxis = { 1.0f,1.0f,0.0f };
+    }
     axis = new Line(program);
     axis->init();
     axis->setPositions({ sphereCenter - rotationAxis, sphereCenter + rotationAxis });
@@ -124,11 +127,51 @@ void Sphere::rotateAround(float angle, glm::vec3 axis, glm::vec3 center) {
     glm::mat4 rotationMatrix = translateBack * rotation * translateToOrigin;
 
     sphereCenter = rotationMatrix * glm::vec4(sphereCenter, 1.0f);
-    if (rotationAxis != axis) {
-        rotationAxis = rotationMatrix * glm::vec4(rotationAxis, 1.0f);
-    }
+
+
     if (child != NULL) {
         child->rotateAround(angle, axis, center);
+        if (rotationAxis != glm::vec3{ 0.0f,1.0f,0.0f }) {
+            child->rotateAround(-angle, axis, sphereCenter);
+        }
+        else {
+            child->rotateAround(-angle, axis, child->getSphereCenter());
+        }
+    }
+}
+
+void Sphere::rotateLocal(float angle, glm::vec3 axis) {
+    for (Triangle* t : faces) {
+        t->rotate(angle, axis, GL_TRUE, sphereCenter);
+    }
+}
+
+void Sphere::rotateAroundSelf(float angle, glm::vec3 axis) {
+
+    axis = glm::normalize(axis);
+
+    glm::mat3 rotationMatrix = glm::mat3(1.0f);
+
+    float cosTheta = cos(angle);
+    float sinTheta = sin(angle);
+
+    rotationMatrix[0][0] = cosTheta + (1 - cosTheta) * axis.x * axis.x;
+    rotationMatrix[0][1] = (1 - cosTheta) * axis.x * axis.y - sinTheta * axis.z;
+    rotationMatrix[0][2] = (1 - cosTheta) * axis.x * axis.z + sinTheta * axis.y;
+    rotationMatrix[1][0] = (1 - cosTheta) * axis.y * axis.x + sinTheta * axis.z;
+    rotationMatrix[1][1] = cosTheta + (1 - cosTheta) * axis.y * axis.y;
+    rotationMatrix[1][2] = (1 - cosTheta) * axis.y * axis.z - sinTheta * axis.x;
+    rotationMatrix[2][0] = (1 - cosTheta) * axis.z * axis.x - sinTheta * axis.y;
+    rotationMatrix[2][1] = (1 - cosTheta) * axis.z * axis.y + sinTheta * axis.x;
+    rotationMatrix[2][2] = cosTheta + (1 - cosTheta) * axis.z * axis.z;
+
+    //Triangles
+    for (Triangle* t : faces) {
+        glm::vec3 points[3];
+        glBindBuffer(GL_ARRAY_BUFFER, t->positionBuffer);
+        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
+
+        t->setPositions({ rotationMatrix * points[0], rotationMatrix * points[1], rotationMatrix * points[2] });
     }
 }
 

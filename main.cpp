@@ -46,12 +46,13 @@ Sphere planet(program);
 Sphere moon(program);
 Sphere moon_moon(program);
 
-float sunSpeed = 0.0f;
-float planetSpeed = 0.0f;
-float moonSpeed = 0.0f;
-float moon_moonSpeed = 0.0f;
+float sunSpeed = 0.1f;
+float planetSpeed = 0.0f, planetSelfSpeed = 0.01;
+float moonSpeed = 0.3f;
+float moon_moonSpeed = 1.0f;
 
 bool shouldRoate = GL_TRUE;
+int iter = 0;
 /*
  Initialization. Should return true if everything is ok and false if something went wrong.
  */
@@ -84,18 +85,20 @@ bool init()
     sun.setPosition({ 0.0f,0.0f,0.0f });
 
     planet.init(0.2f, { 0.0f,1.0f,0.0f });
-    planet.setPosition({ 1.5f,0.0f,0.0f });
-    planet.rotateAround(-45.0f, { 0.0f,0.0f,1.0f }, planet.getSphereCenter());
+    planet.setPosition({ 1.8f,0.0f,0.0f });
+    planet.rotateLocal(-45.0f, { 0.0f,0.0f,1.0f });
     planet.setRotationAxis({ 1.0f,1.0f,0.0f });
 
     moon.init(0.1f, { 0.1f,0.9f,1.0f });
-    moon.setPosition({ 1.9f, 0.0f, 0.0f });
+    moon.setPosition({ 2.4f, 0.0f, 0.0f });
     moon.rotateAround(-45.0f, { 0.0f,0.0f,1.0f }, planet.getSphereCenter());
+    moon.rotateLocal(-45.0f, { 0.0f,0.0f,1.0f });
     moon.setRotationAxis({ 1.0f,1.0f,0.0f });
 
     moon_moon.init(0.05f, { 1.0f,0.0f,0.78f });
-    moon_moon.setPosition({ 2.3f, 0.0f, 0.0f });
+    moon_moon.setPosition({ 2.6f, 0.0f, 0.0f });
     moon_moon.rotateAround(-45.0f, { 0.0f,0.0f,1.0f }, planet.getSphereCenter());
+    moon_moon.rotateLocal(-45.0f, { 0.0f,0.0f,1.0f });
     moon_moon.setRotationAxis({ 1.0f,1.0f,0.0f });
 
     sun.setChild(&planet);
@@ -117,11 +120,22 @@ void render()
     moon.render(projection, view);
     moon_moon.render(projection, view);
 
-    if (shouldRoate) {
+    if (!shouldRoate) {
         sun.rotateAround(sunSpeed, { 0.0f, 1.0f, 0.0f }, sun.getSphereCenter());
-        planet.rotateAround(planetSpeed, sun.getRotationAxis(), sun.getSphereCenter());
-        moon.rotateAround(moonSpeed, planet.getRotationAxis(), planet.getSphereCenter());
-        moon_moon.rotateAround(moon_moonSpeed, moon.getRotationAxis(), moon.getSphereCenter());
+
+        planet.rotateLocal(45.0f, { 0.0f,0.0f,1.0f });
+        planet.rotateAround(planetSpeed, { 0.0f, 1.0f, 0.0f }, sun.getSphereCenter());
+        planet.rotateLocal(-45.0f, { 0.0f,0.0f,1.0f });
+        planet.rotateAroundSelf(planetSelfSpeed, { 0.0f,1.0f,0.0f });
+
+        moon.rotateLocal(45.0f, { 0.0f,0.0f,1.0f });
+        moon.rotateAround(moonSpeed, { 1.0f, 1.0f, 0.0f }, planet.getSphereCenter());
+        moon.rotateLocal(-45.0f, { 0.0f,0.0f,1.0f });
+        
+        moon_moon.rotateLocal(45.0f, { 0.0f,0.0f,1.0f });
+        moon_moon.rotateAround(moon_moonSpeed, { 1.0f, 1.0f, 0.0f }, moon.getSphereCenter());
+        moon_moon.rotateLocal(-45.0f, { 0.0f,0.0f,1.0f });
+
     }
 }
 

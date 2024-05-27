@@ -52,6 +52,7 @@ void Triangle::rotate(float angle, glm::vec3 axis, bool local, glm::vec3 rotatio
 		glm::mat4 rotationMatrix = translateBack * rotation * translateToOrigin;
 
 		model = rotationMatrix * model;
+		model = glm::rotate(model, glm::radians(-angle), axis);
 	}
 }
 

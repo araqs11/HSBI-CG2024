@@ -18,6 +18,8 @@ public:
 	void subdivideTriangle(glm::vec3& v1, glm::vec3& v2, glm::vec3& v3, int depth);
 	void approximateSphere();
 	void rotateAround(float angle, glm::vec3 axis, glm::vec3 center);
+	void rotateLocal(float angle, glm::vec3 axis);
+	void rotateAroundSelf(float angle, glm::vec3 axis);
 	void resetRotation();
 
 	void setRadius(float newRadius);
