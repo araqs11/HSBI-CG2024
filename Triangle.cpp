@@ -1,6 +1,5 @@
 #include "Triangle.h"
 
-
 Triangle::Triangle(cg::GLSLProgram& pg) : Object(pg) {
 
 }
@@ -19,6 +18,13 @@ void Triangle::setPositions(std::vector<glm::vec3> positions) {
 	glEnableVertexAttribArray(pos);
 	glVertexAttribPointer(pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glBindVertexArray(0);
+}
+
+std::vector<glm::vec3> Triangle::getPositions() {
+	glm::vec3 points[3];
+	glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
+	glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
+	return { points[0],points[1],points[2] };
 }
 
 void Triangle::setColors(std::vector<glm::vec3> colors) {
@@ -40,8 +46,14 @@ void Triangle::setIndices(std::vector<GLushort> indices) {
 	glBindVertexArray(0);
 }
 
+
 void Triangle::rotate(float angle, glm::vec3 axis) {
 	model = glm::rotate(model, glm::radians(angle), axis);
+}
+
+
+void Triangle::translate(glm::vec3 translation) {
+	model = glm::translate(model, translation);
 }
 
 void Triangle::init() {

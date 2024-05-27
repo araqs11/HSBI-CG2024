@@ -36,286 +36,17 @@ glm::mat4x4 projection;
 float zNear = 0.1f;
 float zFar  = 100.0f;
 
-glm::vec3 eyePoint(0.0f, 1.0f, 5.0f);
+glm::vec3 eyePoint(0.0f, 0.0f, 5.0f);
 glm::vec3 centerPoint = eyePoint - glm::normalize(eyePoint);
 glm::vec3 up(0.0f, 1.0f, 0.0f);
 float mouseSpeed = 0.01f;
 
-std::vector<Triangle*> faces;
-Sphere ball(program);
-unsigned int n = 4; // Anzahl der Unterteilungsstufen [NICHT ZU HOCH MACHEN SONST STIRBT DEIN PC!]
-float sphereRadius = 1.0f;  // Skaliert die größe der Kugel
-
-Line x_AxisLocal(program), y_AxisLocal(program), z_AxisLocal(program); // lokale x-, y- und z-Achse
-Line x_AxisGlobal(program), y_AxisGlobal(program), z_AxisGlobal(program);// globale x-, y- und z-Achse
-bool cs_switch = GL_FALSE; // Bestimmt welches Koordinatensystem angezeigt wird
-
-void subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, int depth) {
-    //Sobald die Erforderte tiefe erreicht wurde werden die bis hierhin errechneten Punkte in Tatsächliche dreiecks Objekte eingeschrieben,
-    // und dann im globalen vector "faces" abgespeichert
-    if (depth <= 0) {
-        std::vector<glm::vec3> vertices = { v1, v2, v3 };
-        Triangle* t = new Triangle(program);
-        t->init();
-        t->setPositions(vertices);
-        faces.push_back(t);
-    }
-    else { // Teilt ein Dreieck in 3 Dreiecke der vorherigen Tiefe auf.Dies geschieht dadurch, dass eine Ecke des originalen Dreiecks (P1),
-           // mit zwei errechneten Punkten die auf den Vektoren von P1 zu P2 und P1 zu P3 liegen. Danach werden diese errechneten Dreiecke rekursiv wieder aufgeteilt.
-           // hierbei ist zu beachten, dass die neu errechneten Punkte der Dreiecke noch nicht die passende Entfernung zum Mittelpunkt haben. Diese wird später ausgerechnet
-        float scale = depth / (depth + 1.0f);
-        glm::vec3 L_LEFT = v1;
-        glm::vec3 L_RIGHT = v1 + scale * (v2 - v1);
-        glm::vec3 L_UP = v1 + scale * (v3 - v1);
-        subdivideTriangle(L_LEFT, L_RIGHT, L_UP, depth - 1);
-
-        glm::vec3 R_LEFT = v2 + scale * (v1 - v2);
-        glm::vec3 R_RIGHT = v2;
-        glm::vec3 R_UP = v2 + scale * (v3 - v2);
-        subdivideTriangle(R_LEFT, R_RIGHT, R_UP, depth - 1);
-
-        glm::vec3 M_LEFT = v3 + scale * (v1 - v3);
-        glm::vec3 M_RIGHT = v3 + scale * (v2 - v3);
-        glm::vec3 M_UP = v3;
-        subdivideTriangle(M_LEFT, M_RIGHT, M_UP, depth - 1);
-    }
-}
-
-void approximateSphere() {
-    //Sphere
-    /*std::vector<glm::vec3> vectors;
-    std::vector<glm::vec3> color;
-    std::vector<GLushort> indices;
-    */
-
-    for (Triangle* t : faces) {
-        delete t;
-    }
-    faces.clear();
-    //Starte werte für Sphere mit 8 Seiten
-    subdivideTriangle({ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, -1.0f, 0.0f }, n);
-    subdivideTriangle({ 0.0f, 0.0f, 1.0f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, -1.0f, 0.0f }, n);
-    subdivideTriangle({ 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, -1.0f, 0.0f }, n);
-    subdivideTriangle({ -1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, -1.0f, 0.0f }, n);
-    subdivideTriangle({ 0.0f, 0.0f, 1.0f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, n);
-    subdivideTriangle({ -1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, 1.0f, 0.0f }, n);
-    subdivideTriangle({ 0.0f, 0.0f, -1.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, n);
-    subdivideTriangle({ 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, n);
+unsigned int n = 2;
+Sphere sonne(program);
+Sphere erde(program);
 
 
-    //iteriert durch die abgespeicherten dreiecke durch und fixt die Position der Punkte durch anpassung der Entfernung zum mittelpunkt
-    for (int i = 0; i < faces.size(); i++) {
-        glm::vec3 points[3];
-        glBindBuffer(GL_ARRAY_BUFFER, faces[i]->positionBuffer);
-        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
 
-        
-        //normalisiert den Vector zu der länge 1 und multiplieziertdann wieder mit den gewünschten Radius
-        glm::vec3 p1 = glm::normalize(points[0]) * sphereRadius;
-        glm::vec3 p2 = glm::normalize(points[1]) * sphereRadius;
-        glm::vec3 p3 = glm::normalize(points[2]) * sphereRadius;
-        //Speichert die neuen Positionen ab
-        faces[i]->setPositions({ p1, p2, p3 });
-
-        //Sphere
-        /*vectors.push_back(p1);
-        vectors.push_back(p2);
-        vectors.push_back(p3);
-        color.push_back({ 0.0f,255.0f,255.0f });
-        color.push_back({ 0.0f,255.0f,255.0f });
-        color.push_back({ 0.0f,255.0f,255.0f });
-        indices.push_back(3.0f * i);
-        indices.push_back(3.0f * i+1.0f);
-        indices.push_back(3.0f * i+2.0f);*/
-    }
-    //ball.init(vectors, color, indices);
-    //normalisiert den Vector zu der länge 1 und multiplieziertdann wieder mit den gewünschten Radius
-}
-
-//Erstellt das lokale Koordinatensystem
-void initLocalCS() {
-    x_AxisLocal.init();
-    x_AxisLocal.setPositions({ {0.0f, 0.0f, 0.0f}, {0.5f, 0.0f, 0.0f} });
-    x_AxisLocal.setColors({ {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f} });
-
-    y_AxisLocal.init();
-    y_AxisLocal.setPositions({ {0.0f, 0.0f, 0.0f}, {0.0f, 0.5f, 0.0f} });
-    y_AxisLocal.setColors({ {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f} });
-
-    z_AxisLocal.init();
-    z_AxisLocal.setPositions({ {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.5f} });
-    z_AxisLocal.setColors({ {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f} });
-}
-
-//Erstellt das globale Koordinatensystem
-void initGlobalCS() {
-    x_AxisGlobal.init();
-    x_AxisGlobal.setPositions({ {0.0f, 0.0f, 0.0f}, {0.5f, 0.0f, 0.0f} });
-    x_AxisGlobal.setColors({ {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f} });
-
-    y_AxisGlobal.init();
-    y_AxisGlobal.setPositions({ {0.0f, 0.0f, 0.0f}, {0.0f, 0.5f, 0.0f} });
-    y_AxisGlobal.setColors({ {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f} });
-
-    z_AxisGlobal.init();
-    z_AxisGlobal.setPositions({ {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.5f} });
-    z_AxisGlobal.setColors({ {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f} });
-}
-
-//Rendert das lokale Koordinatensystem bei (0,0,0)
-void drawLocalCS() {
-
-    x_AxisLocal.render(projection, view);
-    y_AxisLocal.render(projection, view);
-    z_AxisLocal.render(projection, view);
-
-}
-
-//Rendert das globale Koordinatensystem bei (0,0,0)
-void drawGlobalCS() {
-
-    x_AxisGlobal.render(projection, view);
-    y_AxisGlobal.render(projection, view);
-    z_AxisGlobal.render(projection, view);
-
-}
-
-//Rotationsmatrizen für Rotation um x/y/z - Achse
-glm::mat3 getRotMatrix(float angle, glm::vec3 axis) {
-    if (axis.x > 0.0f) {
-        return {
-            1, 0, 0,
-            0, cos(angle), -sin(angle),
-            0, sin(angle), cos(angle) };
-    }
-    if (axis.y > 0.0f) {
-        return {cos(angle), 0, sin(angle),
-            0, 1, 0,
-            -sin(angle), 0, cos(angle)};
-    }
-    if (axis.z > 0.0f) {
-        return { cos(angle), -sin(angle), 0,
-        sin(angle), cos(angle), 0,
-        0, 0, 1 };
-    }
-    return glm::mat3(1.0f);
-}
-
-//Rotiert die Kugel um das lokale Koordinatensystem
-//Richtet sich nach den lokalen Achsen, welche durch globale Rotation geändert werden
-void rotateAroundLocalCS(float angle, glm::vec3 axis) {
-
-    //std::vector<glm::vec3> vectors;
-
-    axis = glm::normalize(axis);
-
-    glm::mat3 rotationMatrix = glm::mat3(1.0f);
-
-    float cosTheta = cos(angle);
-    float sinTheta = sin(angle);
-
-    rotationMatrix[0][0] = cosTheta + (1 - cosTheta) * axis.x * axis.x;
-    rotationMatrix[0][1] = (1 - cosTheta) * axis.x * axis.y - sinTheta * axis.z;
-    rotationMatrix[0][2] = (1 - cosTheta) * axis.x * axis.z + sinTheta * axis.y;
-    rotationMatrix[1][0] = (1 - cosTheta) * axis.y * axis.x + sinTheta * axis.z;
-    rotationMatrix[1][1] = cosTheta + (1 - cosTheta) * axis.y * axis.y;
-    rotationMatrix[1][2] = (1 - cosTheta) * axis.y * axis.z - sinTheta * axis.x;
-    rotationMatrix[2][0] = (1 - cosTheta) * axis.z * axis.x - sinTheta * axis.y;
-    rotationMatrix[2][1] = (1 - cosTheta) * axis.z * axis.y + sinTheta * axis.x;
-    rotationMatrix[2][2] = cosTheta + (1 - cosTheta) * axis.z * axis.z;
-    
-    //Triangles
-    for (Triangle* t : faces) {
-        glm::vec3 points[3];
-        glBindBuffer(GL_ARRAY_BUFFER, t->positionBuffer);
-        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
-
-        t->setPositions({ rotationMatrix * points[0], rotationMatrix * points[1], rotationMatrix * points[2] });
-    }
-
-    glm::vec3 xAxisPoints[2];
-    glBindBuffer(GL_ARRAY_BUFFER, x_AxisLocal.positionBuffer);
-    glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(xAxisPoints), xAxisPoints);
-
-    glm::vec3 yAxisPoints[2];
-    glBindBuffer(GL_ARRAY_BUFFER, y_AxisLocal.positionBuffer);
-    glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(yAxisPoints), yAxisPoints);
-
-    glm::vec3 zAxisPoints[2];
-    glBindBuffer(GL_ARRAY_BUFFER, z_AxisLocal.positionBuffer);
-    glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(zAxisPoints), zAxisPoints);
-
-    x_AxisLocal.setPositions({ {0.0f,0.0f,0.0f}, rotationMatrix * xAxisPoints[1] });
-    y_AxisLocal.setPositions({ {0.0f,0.0f,0.0f}, rotationMatrix * yAxisPoints[1] });
-    z_AxisLocal.setPositions({ {0.0f,0.0f,0.0f}, rotationMatrix * zAxisPoints[1] });
-    
-    //Sphere
-    /*for (int i = 0; i < ball.indicesCount; i += 3) {
-        glm::vec3 points[3];
-        glBindBuffer(GL_ARRAY_BUFFER, ball.positionBuffer);
-        glGetBufferSubData(GL_ARRAY_BUFFER, i * sizeof(glm::vec3), sizeof(points), points);
-
-        vectors.push_back(rotationMatrix * points[0]);
-        vectors.push_back(rotationMatrix * points[1]);
-        vectors.push_back(rotationMatrix * points[2]);
-    }
-
-    ball.setPositions(vectors);
-    */
-}
-
-//Rotiert die Kugel um das globale Koordinatensystem
-//Rotiert dabei die lokalen Koordinatenachsen mit
-void rotateAroundGlobalCS(float angle, glm::vec3 axis) {
-
-    std::vector<glm::vec3> vectors;
-    
-    glm::mat3 rotationMatrix = getRotMatrix(angle, axis);
-
-    //Triangles
-    for (Triangle* t : faces) {
-        glm::vec3 points[3];
-        glBindBuffer(GL_ARRAY_BUFFER, t->positionBuffer);
-        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
-
-        t->setPositions({ rotationMatrix * points[0], rotationMatrix * points[1], rotationMatrix * points[2] });
-    }
-
-    //Sphere
-    /*for (int i = 0; i < ball.indicesCount; i += 3) {
-        glm::vec3 points[3];
-        glBindBuffer(GL_ARRAY_BUFFER, ball.positionBuffer);
-        glGetBufferSubData(GL_ARRAY_BUFFER, i*sizeof(glm::vec3), sizeof(points), points);
-
-        vectors.push_back(rotationMatrix * points[0]);
-        vectors.push_back(rotationMatrix * points[1]);
-        vectors.push_back(rotationMatrix * points[2]);
-    }
-
-    ball.setPositions(vectors);
-    */
-
-    glm::vec3 xAxisPoints[2];
-    glBindBuffer(GL_ARRAY_BUFFER, x_AxisLocal.positionBuffer);
-    glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(xAxisPoints), xAxisPoints);
-
-    glm::vec3 yAxisPoints[2];
-    glBindBuffer(GL_ARRAY_BUFFER, y_AxisLocal.positionBuffer);
-    glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(yAxisPoints), yAxisPoints);
-
-    glm::vec3 zAxisPoints[2];
-    glBindBuffer(GL_ARRAY_BUFFER, z_AxisLocal.positionBuffer);
-    glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(zAxisPoints), zAxisPoints);
-
-    x_AxisLocal.setPositions({ {0.0f,0.0f,0.0f}, rotationMatrix * xAxisPoints[1] });
-    y_AxisLocal.setPositions({ {0.0f,0.0f,0.0f}, rotationMatrix * yAxisPoints[1] });
-    z_AxisLocal.setPositions({ {0.0f,0.0f,0.0f}, rotationMatrix * zAxisPoints[1] });
-}
-
-void resetRotation() {
-    initLocalCS();
-    approximateSphere();
-}
 /*
  Initialization. Should return true if everything is ok and false if something went wrong.
  */
@@ -343,26 +74,27 @@ bool init()
         std::cerr << program.log();
         return false;
     }
-    initLocalCS();
-    initGlobalCS();
-    approximateSphere();
-    
+    sonne.init(0.5f, 0, 1);
+    erde.init(0.3f, 0, 2);
+    erde.setPosition({ 1.0f,0.0f,0.0f });
+    erde.rotate(-45.0f,glm::vec3(0.0f,0.0f,1.0f),erde.center);
     return true;
+
 }
 /*
  Rendering.
  */
 
-void render()
-{
+void render() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    cs_switch == 0 ? drawGlobalCS() : drawLocalCS();
     
-    for (Triangle* t : faces) {
-        t->render(projection, view);
-    }
-    //ball.render(projection,view);
+    sonne.render(projection, view);
+    erde.render(projection, view);
+    
+    sonne.rotate(1.0f, glm::vec3(0.0f, 1.0f, 0.0f), sonne.center);
+
+    erde.rotate(1.0f, glm::vec3(0.0f, 1.0f, 0.0f), sonne.center);
+    erde.rotate(1.0f, glm::vec3(0.0f, 1.0f, 0.0f), erde.center);
 }
 
 void glutDisplay ()
@@ -400,134 +132,14 @@ void glutKeyboard(unsigned char keycode, int x, int y)
     case 27: // ESC
         glutDestroyWindow(glutID);
         return;
-
-    case '+':
-        if (n < 4) {
-            n++;
-            resetRotation();
-        }
-        break;
-    case '-':
-        if (n > 0) {
-            n--;
-            resetRotation();
-        }
-        break;
-    case 'x':
-        rotateAroundGlobalCS(glm::radians(1.0f), { 1.0f, 0.0f, 0.0f }); //Feste globale Achse
-        break;
-    case 'y':
-        rotateAroundGlobalCS(glm::radians(1.0f), { 0.0f, 1.0f, 0.0f }); //Feste globale Achse
-        break;
-    case 'z':
-        rotateAroundGlobalCS(glm::radians(1.0f), { 0.0f, 0.0f, 1.0f }); //Feste globale Achse
-        break;
-    case 'X':
-        glBindBuffer(GL_ARRAY_BUFFER, x_AxisLocal.positionBuffer);
-        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(xAxisPoints), xAxisPoints);
-        rotateAroundLocalCS(glm::radians(1.0f), xAxisPoints[1]); ////variierende lokale Achse
-        break;
-    case 'Y':
-        glBindBuffer(GL_ARRAY_BUFFER, y_AxisLocal.positionBuffer);
-        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(yAxisPoints), yAxisPoints);
-        rotateAroundLocalCS(glm::radians(1.0f), yAxisPoints[1]); ////variierende lokale Achse
-        break;
-    case 'Z':
-        glBindBuffer(GL_ARRAY_BUFFER, z_AxisLocal.positionBuffer);
-        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(zAxisPoints), zAxisPoints);
-        rotateAroundLocalCS(glm::radians(1.0f), yAxisPoints[1]); //variierende lokale Achse
-        break;
-    case 'a':
-        eyePoint -= (eyePoint - centerPoint) * 0.1f;
-        centerPoint = eyePoint - glm::normalize(eyePoint - centerPoint);
-        break;
-    /*case 'w':
-        cameraDirection = glm::normalize(eyePoint - centerPoint);
-        cameraHorizontal = glm::normalize(glm::cross(up, cameraDirection)) * -0.03f;
-        centerPoint += cameraHorizontal;
-        eyePoint += cameraHorizontal;
-        centerPoint = eyePoint - glm::normalize(eyePoint - centerPoint);
-        break;*/
-    case 's':
-        eyePoint += (eyePoint - centerPoint) * 0.1f;
-        centerPoint = eyePoint - glm::normalize(eyePoint - centerPoint);
-        break;
-    /*case 'd':
-        cameraDirection = glm::normalize(eyePoint - centerPoint);
-        cameraHorizontal = glm::normalize(glm::cross(up, cameraDirection)) * 0.03f;
-        centerPoint += cameraHorizontal;
-        eyePoint += cameraHorizontal;
-        centerPoint = eyePoint - glm::normalize(eyePoint - centerPoint);
-        break;*/
-    case 'k':
-        cs_switch = !cs_switch;
-        break;
-    case 'n':
-        resetRotation();
-        break;
-    case 'r':
-        sphereRadius -= sphereRadius > 0.5f ? 0.1f : 0.0f;
-        resetRotation();
-        break;
-    case 'R':
-        sphereRadius += sphereRadius < 2.5f ? 0.1f : 0.0f;
-        resetRotation();
-        break;
     }
-    
+    // sphere.init aufrufen mit Parameter N und die Sphere.render mit view und projetction
 
        
     view = glm::lookAt(eyePoint, centerPoint, up);
     glutPostRedisplay();
 }
 
-void glutMotion(int x, int y) {
-    float w = WINDOW_WIDTH / 2.0f;
-    float h = WINDOW_HEIGHT / 2.0f;
-    float xMotionPercent = x - w >= 0 ? 1 / (w / x) : w / x;
-    float yMotionPercent = y - h >= 0 ? 1 / (h / y) : h / y;
-
-    glm::vec3 cameraDirection;
-    glm::vec3 cameraHorizontal;
-    glm::vec3 cameraUp;
-    if (x < w) {
-        cameraDirection = glm::normalize(eyePoint - centerPoint);
-        cameraHorizontal = glm::normalize(glm::cross(up, cameraDirection));
-        centerPoint += cameraHorizontal * -mouseSpeed * xMotionPercent;
-    }
-    else if (x > w) {
-        cameraDirection = glm::normalize(eyePoint - centerPoint);
-        cameraHorizontal = glm::normalize(glm::cross(up, cameraDirection));
-        centerPoint += cameraHorizontal * mouseSpeed * xMotionPercent;
-    }
-    if (y > h) {
-        cameraDirection = glm::normalize(eyePoint - centerPoint);
-        cameraHorizontal = glm::normalize(glm::cross(up, cameraDirection));
-        cameraUp = glm::normalize(glm::cross(cameraHorizontal, cameraDirection));
-        if (cameraUp.y < -0.1f) {
-            centerPoint += cameraUp * mouseSpeed * yMotionPercent;
-            }
-    }
-    else if (y < h) {
-        cameraDirection = glm::normalize(eyePoint - centerPoint);
-        cameraHorizontal = glm::normalize(glm::cross(up, cameraDirection));
-        cameraUp = glm::normalize(glm::cross(cameraHorizontal, cameraDirection));
-        if (cameraUp.y < -0.1f) {
-            centerPoint += cameraUp * -mouseSpeed * yMotionPercent;
-        }
-    }
-    view = glm::lookAt(eyePoint, centerPoint, up);
-    glutWarpPointer(w, h);
-    glutPostRedisplay();
-}
-void glutMouse(int button, int status, int x, int y) {
-    if (button == GLUT_LEFT_BUTTON && status == GLUT_DOWN) {
-        glutSetCursor(GLUT_CURSOR_NONE);
-    }
-    else if (button == GLUT_LEFT_BUTTON && status == GLUT_UP) {
-        glutSetCursor(GLUT_CURSOR_LEFT_ARROW);
-    }
-}
 
 int main(int argc, char** argv)
 {
@@ -541,7 +153,7 @@ int main(int argc, char** argv)
     glutInitContextFlags  (GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
     glutInitDisplayMode   (GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE);
   
-    glutCreateWindow("Aufgabenblatt 01");
+    glutCreateWindow("Aufgabenblatt 03");
     glutID = glutGetWindow();
   
     // GLEW: Load opengl extensions
@@ -569,9 +181,7 @@ int main(int argc, char** argv)
     glutReshapeFunc(glutResize);
     glutDisplayFunc(glutDisplay);
     glutIdleFunc   (glutDisplay); // redisplay when idle
-  
-    glutMotionFunc(glutMotion);
-    glutMouseFunc(glutMouse);
+
     glutKeyboardFunc(glutKeyboard); 
   
     // init vertex-array-objects.
