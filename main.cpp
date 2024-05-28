@@ -44,8 +44,10 @@ float mouseSpeed = 0.01f;
 unsigned int n = 2;
 Sphere sonne(program);
 Sphere erde(program);
-
-
+Sphere mond(program);
+Sphere mondmond(program);
+bool darfsichdrehen = true;
+float rotationSpeed = 0.2f;
 
 /*
  Initialization. Should return true if everything is ok and false if something went wrong.
@@ -74,10 +76,19 @@ bool init()
         std::cerr << program.log();
         return false;
     }
-    sonne.init(0.5f, 0, 1);
+    sonne.init(0.4f, 0, 1);
+
     erde.init(0.3f, 0, 2);
-    erde.setPosition({ 1.0f,0.0f,0.0f });
+    erde.setPosition({ 2.0f,0.0f,0.0f });
     erde.rotate(-45.0f,glm::vec3(0.0f,0.0f,1.0f),erde.center);
+
+    mond.init(0.1f, 0, 3);
+    mond.setPosition({ 1.5f,0.5f,0.0f });
+    mond.rotate(-45.0f, glm::vec3(0.0f, 0.0f, 1.0f), mond.center);
+
+    mondmond.init(0.05f, 0, 4);
+    mondmond.setPosition({ 1.4f,0.6f,0.0f });
+    mondmond.rotate(-45.0f, glm::vec3(0.0f, 0.0f, 1.0f), mondmond.center);
     return true;
 
 }
@@ -90,11 +101,27 @@ void render() {
     
     sonne.render(projection, view);
     erde.render(projection, view);
-    
-    sonne.rotate(1.0f, glm::vec3(0.0f, 1.0f, 0.0f), sonne.center);
+    mond.render(projection, view);
+    mondmond.render(projection, view);
 
-    erde.rotate(1.0f, glm::vec3(0.0f, 1.0f, 0.0f), sonne.center);
-    erde.rotate(1.0f, glm::vec3(0.0f, 1.0f, 0.0f), erde.center);
+
+    if (darfsichdrehen) {
+        sonne.rotate(1.0f * rotationSpeed, glm::vec3(0.0f, 1.0f, 0.0f), sonne.center);
+
+        erde.rotate(0.6f * rotationSpeed, glm::vec3(0.0f, 1.0f, 0.0f), sonne.center);
+        erde.rotate(0.6f * rotationSpeed, glm::vec3(0.0f, 1.0f, 0.0f), erde.center);
+
+        mond.rotate(0.6f * rotationSpeed, glm::vec3(0.0f, 1.0f, 0.0f), sonne.center);
+        mond.rotate(0.6f * rotationSpeed, glm::vec3(1.0f, 0.0f, 0.0f), erde.center);
+        mond.rotate(0.4f * rotationSpeed, glm::vec3(0.0f, 1.0f, 0.0f), mond.center);
+
+        mondmond.rotate(0.6f * rotationSpeed, glm::vec3(0.0f, 1.0f, 0.0f), sonne.center);
+        mondmond.rotate(0.6f * rotationSpeed, glm::vec3(1.0f, 0.0f, 0.0f), erde.center);
+        mondmond.rotate(0.4f * rotationSpeed, glm::vec3(0.0f, 1.0f, 0.0f), mond.center);
+        mondmond.rotate(0.4f * rotationSpeed, glm::vec3(0.0f, 1.0f, 0.0f), mondmond.center);
+    }
+    
+
 }
 
 void glutDisplay ()
@@ -132,6 +159,18 @@ void glutKeyboard(unsigned char keycode, int x, int y)
     case 27: // ESC
         glutDestroyWindow(glutID);
         return;
+    case 'g':
+        darfsichdrehen = !darfsichdrehen;
+        break;
+    case 'd':
+        if (rotationSpeed < 2.0f) {
+            rotationSpeed += 0.1f;
+        }        break;
+    case 'f':
+        if (rotationSpeed > 0.2f) {
+            rotationSpeed -= 0.1f;
+        }
+        break;
     }
     // sphere.init aufrufen mit Parameter N und die Sphere.render mit view und projetction
 

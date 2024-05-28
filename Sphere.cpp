@@ -102,9 +102,12 @@ void Sphere::subdivideTriangle(const glm::vec3& v1, const glm::vec3& v2, const g
 		t->init();
 		if (farbe == 1) {
 			t->setColors({{1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f , 1.0f} });
-		}
-		else if (farbe == 2) {
+		} else if (farbe == 2) {
 			t->setColors({ {0.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 1.0f}, {0.0f, 1.0f , 1.0f} });
+		} else if (farbe == 3) {
+			t->setColors({ {1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f} });
+		} else if (farbe == 4) {
+			t->setColors({ {1.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f} });
 
 		}
 		t->setPositions(vertices);
