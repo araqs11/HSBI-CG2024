@@ -46,10 +46,10 @@ Sphere planet(program);
 Sphere moon(program);
 Sphere moon_moon(program);
 
-float sunSpeed = 0.1f;
-float planetSpeed = 0.0f, planetSelfSpeed = 0.01;
-float moonSpeed = 0.3f;
-float moon_moonSpeed = 1.0f;
+float sunSelfSpeed = 0.01f;
+float planetSpeed = 0.0f, planetSelfSpeed = 0.01f;
+float moonSpeed = 0.0f;
+float moon_moonSpeed = 0.0f;
 
 bool shouldRoate = GL_TRUE;
 int iter = 0;
@@ -120,8 +120,8 @@ void render()
     moon.render(projection, view);
     moon_moon.render(projection, view);
 
-    if (!shouldRoate) {
-        sun.rotateAround(sunSpeed, { 0.0f, 1.0f, 0.0f }, sun.getSphereCenter());
+    if (shouldRoate) {
+        sun.rotateAroundSelf(sunSelfSpeed, { 0.0f, 1.0f, 0.0f });
 
         planet.rotateLocal(45.0f, { 0.0f,0.0f,1.0f });
         planet.rotateAround(planetSpeed, { 0.0f, 1.0f, 0.0f }, sun.getSphereCenter());
@@ -186,13 +186,13 @@ void glutKeyboard(unsigned char keycode, int x, int y)
         shouldRoate = !shouldRoate;
         break;
     case 'f':   //Schneller
-        sunSpeed = sunSpeed < speedLimit - speedChange ? sunSpeed + speedChange : speedLimit;
+        sunSelfSpeed = sunSelfSpeed < speedLimit - speedChange/100 ? sunSelfSpeed + speedChange/100 : speedLimit;
         planetSpeed = planetSpeed < speedLimit - speedChange ? planetSpeed + speedChange : speedLimit;
         moonSpeed = moonSpeed < speedLimit - speedChange ? moonSpeed + speedChange : speedLimit;
         moon_moonSpeed = moon_moonSpeed < speedLimit - speedChange ? moon_moonSpeed + speedChange : speedLimit;
         break;
     case 'd':   //Langsamer
-        sunSpeed = sunSpeed > speedChange ? sunSpeed - speedChange : 0;
+        sunSelfSpeed = sunSelfSpeed > speedChange/100 ? sunSelfSpeed - speedChange/100 : 0;
         planetSpeed = planetSpeed > speedChange ? planetSpeed - speedChange : 0;
         moonSpeed = moonSpeed > speedChange ? moonSpeed - speedChange : 0;
         moon_moonSpeed = moon_moonSpeed > speedChange ? moon_moonSpeed - speedChange : 0;
